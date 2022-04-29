@@ -2,12 +2,20 @@
 #define LITEJSON_H
 
 #include <string>
+#include "json_value.h"
 
 namespace litejson
 {
 
+  /**
+   * JSON parser class
+   */
   class json_loader
   {
+
+  private:
+
+    json_value * m_root;
 
   public:
 
