@@ -1,3 +1,7 @@
+/**
+ * \file json_object.cpp
+ */
+
 #include <json_object.h>
 
 #include "int_json_object.h"

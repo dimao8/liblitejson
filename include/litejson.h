@@ -1,3 +1,7 @@
+/**
+ * \file litejson.h
+ */
+
 #ifndef LITEJSON_H
 #define LITEJSON_H
 

@@ -1,3 +1,7 @@
+/**
+ * \file int_json_array.cpp
+ */
+
 #include "int_json_array.h"
 
 #include <stdexcept>

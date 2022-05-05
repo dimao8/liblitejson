@@ -1,3 +1,7 @@
+/**
+ * \file int_json_array.h
+ */
+
 #ifndef INT_JSON_ARRAY_H
 #define INT_JSON_ARRAY_H
 

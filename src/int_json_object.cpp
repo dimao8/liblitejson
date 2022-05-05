@@ -1,3 +1,7 @@
+/**
+ * \file int_json_object.cpp
+ */
+
 #include "int_json_object.h"
 
 namespace litejson

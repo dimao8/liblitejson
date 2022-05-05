@@ -1,9 +1,5 @@
 /**
  * \file json_value.h
- * \author Khruschev Dmitry aka DimaO (dimao8@yandex.ru)
- * \brief JSON Value class header
- * \version 0.1
- * \date 2022-04-25
  */
 
 #ifndef JSON_VALUE_H

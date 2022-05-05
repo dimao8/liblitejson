@@ -1,9 +1,5 @@
 /**
  * \file json_value.cpp
- * \author Khruschev Dmitry aka DimaO (dimao8@yandex.ru)
- * \brief JSON Value class implementation
- * \version 0.1
- * \date 2022-04-27
  */
 
 #include <json_value.h>

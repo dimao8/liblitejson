@@ -1,3 +1,7 @@
+/**
+ * \file int_json_object.h
+ */
+
 #ifndef INT_JSON_OBJECT_H
 #define INT_JSON_OBJECT_H
 

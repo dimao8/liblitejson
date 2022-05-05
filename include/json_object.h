@@ -1,3 +1,7 @@
+/**
+ * \file json_object.h
+ */
+
 #ifndef JSON_OBJECT_H
 #define JSON_OBJECT_H
 
@@ -10,7 +14,6 @@ namespace litejson
 
   /**
    * JSON object value class
-   * 
    */
   class json_object_value : public json_value
   {

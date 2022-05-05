@@ -19,3 +19,11 @@ include_HERADERS = include/litejson.h \
 LIBTOOL_DEPS = @LIBTOOL_DEPS@
 libtool: $(LIBTOOL_DEPS)
 	$(SHELL) ./config.status libtool
+
+TESTS = test1.sh
+
+check_PROGRAMS = test1
+
+test1_SOURCES = tests/test1.cpp
+test1_CXXFLAGS = -I$(srcdir)/include
+test1_LDADD = -llitejson

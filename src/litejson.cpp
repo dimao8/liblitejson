@@ -1,3 +1,7 @@
+/**
+ * \file litejson.cpp
+ */
+
 #include <litejson.h>
 
 namespace litejson
