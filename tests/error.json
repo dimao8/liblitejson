@@ -1,0 +1,18 @@
+{
+  "string" : "string",
+  "utf8 string" : "",
+  "number" : 1256,
+  "numberf" : 1.256E-25,
+  "boolean true" : true,
+  "boolean false" : false,
+  "empty" : null,
+  "array" : [0, 1.025, "hello, true, "world"],
+  "object" :
+  {
+    "there" : "is",
+    "an" :
+    {
+      "internal" : "object"
+    }
+  }
+}
