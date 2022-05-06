@@ -48,6 +48,8 @@ namespace litejson
      */
     size_t size();
 
+    void add_entry(const std::string& key, json_value& val);
+
   };
 
 }

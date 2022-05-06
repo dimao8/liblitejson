@@ -47,6 +47,11 @@ namespace litejson
     bool operator==(const json_object_value& other);
 
     /**
+     * Nonequal operator
+     */
+    bool operator!=(const json_object_value& other);
+
+    /**
      * Get JSON value from object by key
      * 
      * \param [in] key -- Key of the value
@@ -58,6 +63,10 @@ namespace litejson
      * Return number of children values.
      */
     size_t size();
+
+    json_object_value& as_object() { return *this; }
+
+    void add_entry(const std::string& key, json_value& val);
 
   };
 

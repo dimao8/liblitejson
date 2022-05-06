@@ -73,6 +73,8 @@ namespace litejson
      */
     size_t size();
 
+    json_array_value& as_array() { return *this; }
+
   };
 
   /**

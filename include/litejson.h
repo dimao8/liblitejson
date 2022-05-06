@@ -36,7 +36,8 @@ namespace litejson
         tok_operator
       } type;
       std::string text;
-      token(token_type tt, const std::string& str) { type = tt; text = str; }
+      int line;
+      token(token_type tt, const std::string& str, int l) { type = tt; text = str; line = l; }
     };
     std::vector<token> m_tokens;                        //!< Token list
 
@@ -60,9 +61,10 @@ namespace litejson
      * Make lexical analysis of single string
      * 
      * \param [in] str    -- String to parse
+     * \param [in] n      -- Number of string
      * \return Return result of operation. false on error.
      */
-    bool parse_string(std::string& str);
+    bool parse_string(std::string& str, int n);
 
     /**
      * Parse token list and extract current node. This function
@@ -72,7 +74,7 @@ namespace litejson
      * \param [in, out] index   -- Index of the current token
      * \return Return result of operation
      */
-    bool parse_node(json_value* node, int* index);
+    bool parse_node(json_value** val, int* index);
 
   public:
 

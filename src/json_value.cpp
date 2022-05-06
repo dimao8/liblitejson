@@ -85,42 +85,42 @@ namespace litejson
 
 /*********************  json_value::as_array  *******************/
 
-  json_array_value& json_value::as_array() const
+  json_array_value& json_value::as_array()
   {
     throw std::logic_error("JSON value is not an array");
   }
 
 /********************  json_value::as_object  *******************/
 
-  json_object_value& json_value::as_object() const
+  json_object_value& json_value::as_object()
   {
     throw std::logic_error("JSON value is not an object");
   }
 
 /*******************  json_value::as_integer  *******************/
 
-  int json_value::as_integer() const
+  int json_value::as_integer()
   {
     throw std::logic_error("JSON value is not a number");
   }
 
 /*********************  json_value::as_float  *******************/
 
-  float json_value::as_float() const
+  float json_value::as_float()
   {
     throw std::logic_error("JSON value is not a number");
   }
 
 /********************  json_value::as_string  *******************/
 
-  const std::string& json_value::as_string() const
+  const std::string& json_value::as_string()
   {
     throw std::logic_error("JSON value is not a string");
   }
 
 /*******************  json_value::as_boolean  *******************/
 
-  bool json_value::as_boolean() const
+  bool json_value::as_boolean()
   {
     throw std::logic_error("JSON value is not a boolean");
   }
@@ -171,7 +171,7 @@ namespace litejson
 
 /***************  json_boolean_value::as_boolean  ***************/
 
-  bool json_boolean_value::as_boolean() const
+  bool json_boolean_value::as_boolean()
   {
     return m_data;
   }
@@ -246,14 +246,14 @@ namespace litejson
 /***************  json_boolean_value::as_integer  ***************/
 // FIXME : If int value will be changed, the integer part stand unchanged
 
-  int json_numeric_value::as_integer() const
+  int json_numeric_value::as_integer()
   {
     return m_i_data;
   }
 
 /****************  json_boolean_value::as_float  ****************/
 
-  float json_numeric_value::as_float() const
+  float json_numeric_value::as_float()
   {
     return m_f_data;
   }
@@ -304,7 +304,7 @@ namespace litejson
 
 /****************  json_string_value::as_string  ****************/
 
-  const std::string& json_string_value::as_string() const
+  const std::string& json_string_value::as_string()
   {
     return m_data;
   }

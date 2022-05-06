@@ -48,6 +48,13 @@ namespace litejson
     return other.m_internal == m_internal;
   }
 
+/******************  json_object_value::operator!=  *****************/
+
+  bool json_object_value::operator!=(const json_object_value& other)
+  {
+    return other.m_internal != m_internal;
+  }
+
 /**********************  json_object_value::at  *********************/
 
   json_value& json_object_value::at(const std::string& key)
@@ -74,6 +81,11 @@ namespace litejson
       return 0;
     else
       return m_internal->size();
+  }
+
+  void json_object_value::add_entry(const std::string& key, json_value& val)
+  {
+    m_internal->add_entry(key, val);
   }
 
 }

@@ -7,6 +7,9 @@
 #include <iostream>
 #include <cctype>
 
+#include "json_object.h"
+#include "json_array.h"
+
 namespace litejson
 {
 
@@ -39,7 +42,7 @@ namespace litejson
     // Lexical analysis
     if (!lexical(ifs, &line))
       {
-        std::cerr << "Lexical error on (" << line << ")" << std::endl;
+        std::cerr << "Lexical error(" << line << ")" << std::endl;
         std::cerr.flush();
         m_badbit = true;
         return;
@@ -57,7 +60,7 @@ namespace litejson
     while (!std::getline(stream, str).eof())
       {
         (*n)++;
-        if (!parse_string(str))
+        if (!parse_string(str, *n))
           return false;
       }
 
@@ -66,7 +69,7 @@ namespace litejson
 
 /*******************  json_loader::parse_string  ******************/
 
-  bool json_loader::parse_string(std::string& str)
+  bool json_loader::parse_string(std::string& str, int n)
   {
     auto it = str.begin();
     std::string str_token;
@@ -86,7 +89,7 @@ namespace litejson
                 it++;
               }
             it++;
-            m_tokens.emplace_back(token::tok_string, str_token);
+            m_tokens.emplace_back(token::tok_string, str_token, n);
             // TODO : Extract coded characters
           }
         else if (*it == '-' || std::isdigit(*it))   // Numeric
@@ -141,7 +144,7 @@ namespace litejson
                   }
               }
 
-            m_tokens.emplace_back(token::tok_number, str_token);
+            m_tokens.emplace_back(token::tok_number, str_token, n);
           }
         else if ((*it == '{')                       // Operator
                 || (*it == '}')
@@ -151,7 +154,7 @@ namespace litejson
                 || (*it == ','))
           {
             str_token.push_back(*it);
-            m_tokens.emplace_back(token::tok_operator, str_token);
+            m_tokens.emplace_back(token::tok_operator, str_token, n);
             it++;
           }
         else if (std::isalpha(*it))                 // null, false, true
@@ -164,15 +167,15 @@ namespace litejson
 
             if (str_token == "null")
               {
-                m_tokens.emplace_back(token::tok_null, str_token);
+                m_tokens.emplace_back(token::tok_null, str_token, n);
               }
             else if (str_token == "true")
               {
-                m_tokens.emplace_back(token::tok_boolean, str_token);
+                m_tokens.emplace_back(token::tok_boolean, str_token, n);
               }
             else if (str_token == "false")
               {
-                m_tokens.emplace_back(token::tok_boolean, str_token);
+                m_tokens.emplace_back(token::tok_boolean, str_token, n);
               }
             else
               return false;
@@ -198,7 +201,7 @@ namespace litejson
   {
     int index = 0;
 
-    if (parse_node(m_root, &index))
+    if (parse_node(&m_root, &index))
       return true;
     else
       {
@@ -209,14 +212,99 @@ namespace litejson
 
 /********************  json_loader::parse_node  *******************/
 
-  bool json_loader::parse_node(json_value* val, int* index)
+  bool json_loader::parse_node(json_value** val, int* index)
   {
+    std::string name;
+    json_value* local_val;
+    json_object_value obj_val;
+    json_array_value array_val;
+
+    if (val == nullptr)
+      return false;
+
     switch (m_tokens[*index].type)
       {
 
       case token::tok_operator:
-        
+        if (m_tokens[*index].text[0] == '{')                    // Object
+          {
+            (*index)++;
+            while (true)
+              {
+                // Get name
+                if (m_tokens[*index].type != token::tok_string)
+                  {
+                    std::cerr << "Syntax error (" << m_tokens[*index].line << "): String expected" << std::endl;
+                    return false;
+                  }
 
+                name = m_tokens[*index].text;
+                (*index)++;
+
+                // Get :
+                if (m_tokens[*index].type != token::tok_operator || m_tokens[*index].text[0] != ':')
+                  {
+                    std::cerr << "Syntax error (" << m_tokens[*index].line << "): ``:\'\' expected" << std::endl;
+                    return false;
+                  }
+
+                (*index)++;
+
+                // Get value
+                if (!parse_node(&local_val, index))
+                  return false;
+
+                obj_val = (*val)->as_object();
+                if (obj_val != empty_object_value)
+                  obj_val.add_entry(name, *local_val);
+
+                if (m_tokens[*index].type == token::tok_operator)
+                  {
+                    if (m_tokens[*index].text[0] == ',')
+                      {
+                        (*index)++;
+                        continue;
+                      }
+                    else if (m_tokens[*index].text[0] == '}')
+                      break;
+                    else
+                      {
+                        std::cerr << "Syntax error (" << m_tokens[*index].line << "): ``"
+                                  << m_tokens[*index].text << "\'\' is not allowed here" << std::endl;
+                        return false;
+                      }
+                  }
+                else
+                  {
+                    std::cerr << "Syntax error (" << m_tokens[*index].line << "): ``"
+                              << m_tokens[*index].text << "\'\' is not allowed here" << std::endl;
+                    return false;
+                  }
+              }
+          }
+        else if (m_tokens[*index].text[0] == '[')               // Array
+          {
+
+          }
+        else
+          {
+            std::cerr << "Syntax error (" << m_tokens[*index].line << "): ``"
+                      << m_tokens[*index].text << "\'\' is not allowed here" << std::endl;
+            return false;
+          }
+        break;
+
+      case token::tok_null:                                     // Null
+        break;
+
+      case token::tok_boolean:                                  // Boolean
+        break;
+
+      case token::tok_string:                                   // String
+        break;
+
+      case token::tok_number:                                   // Number
+        break;
       }
   }
 

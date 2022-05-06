@@ -86,12 +86,12 @@ namespace litejson
     virtual bool is_array() const;
 
     // TODO : Should i throw an exception if value is not same as extract function
-    virtual const std::string& as_string() const;
-    virtual int as_integer() const;
-    virtual float as_float() const;
-    virtual bool as_boolean() const;
-    virtual json_array_value& as_array() const;
-    virtual json_object_value& as_object() const;
+    virtual const std::string& as_string();
+    virtual int as_integer();
+    virtual float as_float();
+    virtual bool as_boolean();
+    virtual json_array_value& as_array();
+    virtual json_object_value& as_object();
 
   protected:
 
@@ -157,7 +157,7 @@ namespace litejson
     /**
      * Return boolean value
      */
-    virtual bool as_boolean() const;
+    virtual bool as_boolean();
 
   };
 
@@ -219,12 +219,12 @@ namespace litejson
     /**
      * Return integer value
      */
-    virtual int as_integer() const;
+    virtual int as_integer();
     
     /**
      * Return float value
      */
-    virtual float as_float() const;
+    virtual float as_float();
 
   };
 
@@ -275,7 +275,7 @@ namespace litejson
     /**
      * Return boolean value
      */
-    virtual const std::string& as_string() const;
+    virtual const std::string& as_string();
 
   };
 
