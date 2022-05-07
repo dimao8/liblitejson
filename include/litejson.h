@@ -72,9 +72,9 @@ namespace litejson
      * 
      * \param [in] node         -- Node, which receives children from JSON
      * \param [in, out] index   -- Index of the current token
-     * \return Return result of operation
+     * \return Extracted node or nullptr
      */
-    bool parse_node(json_value** val, int* index);
+    json_value* parse_node(int* index);
 
   public:
 
@@ -101,6 +101,11 @@ namespace litejson
      * 
      */
     void print_json_tree();
+
+    /**
+     * Delete JSON tree
+     */
+    void clear_tree();
 
   };
 

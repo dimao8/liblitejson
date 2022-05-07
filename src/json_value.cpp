@@ -5,6 +5,7 @@
 #include <json_value.h>
 
 #include <stdexcept>
+#include <iostream>
 
 namespace litejson
 {
@@ -125,6 +126,11 @@ namespace litejson
     throw std::logic_error("JSON value is not a boolean");
   }
 
+  void json_value::print()
+  {
+    std::cout << "null";
+  }
+
 /***********  json_boolean_value::json_boolean_value  ***********/
 
   json_boolean_value::json_boolean_value()
@@ -176,6 +182,16 @@ namespace litejson
     return m_data;
   }
 
+/******************  json_boolean_value::print  *****************/
+
+  void json_boolean_value::print()
+  {
+    if (m_data)
+      std::cout << "true";
+    else
+      std::cout << "false";
+  }
+
 /***********  json_numeric_value::json_numeric_value  ***********/
 
   json_numeric_value::json_numeric_value()
@@ -202,16 +218,6 @@ namespace litejson
   : json_value(),
     m_i_data(f),
     m_f_data(f)
-  {
-    m_value_type = t_number;
-  }
-
-/***********  json_numeric_value::json_numeric_value  ***********/
-
-  json_numeric_value::json_numeric_value(int i)
-  : json_value(),
-    m_i_data(i),
-    m_f_data(i)
   {
     m_value_type = t_number;
   }
@@ -244,7 +250,6 @@ namespace litejson
   }
 
 /***************  json_boolean_value::as_integer  ***************/
-// FIXME : If int value will be changed, the integer part stand unchanged
 
   int json_numeric_value::as_integer()
   {
@@ -256,6 +261,13 @@ namespace litejson
   float json_numeric_value::as_float()
   {
     return m_f_data;
+  }
+
+/******************  json_boolean_value::print  *****************/
+
+  void json_numeric_value::print()
+  {
+    std::cout << m_f_data;
   }
 
 /************  json_string_value::json_string_value  ************/
@@ -307,5 +319,10 @@ namespace litejson
   const std::string& json_string_value::as_string()
   {
     return m_data;
+  }
+
+  void json_string_value::print()
+  {
+    std::cout << "\"" << m_data << "\"";
   }
 }

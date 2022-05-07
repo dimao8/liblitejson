@@ -51,6 +51,11 @@ namespace litejson
     json_array_value(const json_array_value& other);
 
     /**
+     * Destructor
+     */
+    ~json_array_value();
+
+    /**
      * Copy assignment operator
      */
     json_array_value& operator=(const json_array_value& other);
@@ -69,11 +74,20 @@ namespace litejson
     json_value& at(size_t index);
 
     /**
+     * Add new json value to the array
+     * 
+     * \param [in] val -- Value to add
+     */
+    void add(json_value& val);
+
+    /**
      * Get size of the value array
      */
     size_t size();
 
     json_array_value& as_array() { return *this; }
+
+    virtual void print();
 
   };
 

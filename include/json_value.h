@@ -93,6 +93,8 @@ namespace litejson
     virtual json_array_value& as_array();
     virtual json_object_value& as_object();
 
+    virtual void print();
+
   protected:
 
     /**
@@ -159,6 +161,8 @@ namespace litejson
      */
     virtual bool as_boolean();
 
+    virtual void print();
+
   };
 
   /**
@@ -197,11 +201,6 @@ namespace litejson
     explicit json_numeric_value(float f);
 
     /**
-     * Construct from integer value
-     */
-    explicit json_numeric_value(int i);
-
-    /**
      * Assignment operator
      */
     json_numeric_value& operator=(const json_numeric_value& other);
@@ -225,6 +224,8 @@ namespace litejson
      * Return float value
      */
     virtual float as_float();
+
+    virtual void print();
 
   };
 
@@ -276,6 +277,8 @@ namespace litejson
      * Return boolean value
      */
     virtual const std::string& as_string();
+
+    virtual void print();
 
   };
 

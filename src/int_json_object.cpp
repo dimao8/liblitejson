@@ -35,7 +35,7 @@ namespace litejson
 
   void int_json_object::add_entry(const std::string& key, json_value& val)
   {
-    m_values[key] = val;
+    m_values.emplace(key, val);
   }
 
 }

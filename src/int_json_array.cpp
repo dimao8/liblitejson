@@ -34,6 +34,13 @@ namespace litejson
     return it;
   }
 
+/****************  int_json_array::add  ***************/
+
+  void int_json_array::add(json_value& val)
+  {
+    m_values.emplace_back(val);
+  }
+
 /***************  int_json_array::size  ***************/
 
   size_t int_json_array::size()

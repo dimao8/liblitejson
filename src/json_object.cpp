@@ -4,6 +4,8 @@
 
 #include <json_object.h>
 
+#include <iostream>
+
 #include "int_json_object.h"
 
 namespace litejson
@@ -27,6 +29,14 @@ namespace litejson
   {
     m_value_type = t_object;
     m_internal = other.m_internal;
+  }
+
+/**************  json_object_value::~json_object_value  *************/
+
+  json_object_value::~json_object_value()
+  {
+    if (m_internal != nullptr)
+      delete m_internal;
   }
 
 /******************  json_object_value::operator=  ******************/
@@ -86,6 +96,23 @@ namespace litejson
   void json_object_value::add_entry(const std::string& key, json_value& val)
   {
     m_internal->add_entry(key, val);
+  }
+
+  void json_object_value::print()
+  {
+    std::cout << "{" << std::endl;
+
+    if (m_internal->size() != 0)
+      {
+        for (auto it : m_internal->m_values)
+          {
+            std::cout << "\"" << it.first << "\" : ";
+            it.second.print();
+            std::cout << "," << std::endl;
+          }
+      }
+
+    std::cout << "}" << std::endl;
   }
 
 }

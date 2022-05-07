@@ -4,6 +4,8 @@
 
 #include <json_array.h>
 
+#include <iostream>
+
 #include "int_json_array.h"
 
 namespace litejson
@@ -27,6 +29,14 @@ namespace litejson
   {
     m_value_type = t_array;
     m_internal = other.m_internal;
+  }
+
+/**********  json_array_value::~json_array_value  *********/
+
+  json_array_value::~json_array_value()
+  {
+    if (m_internal != nullptr)
+      delete m_internal;
   }
 
 /**************  json_array_value::operator=  *************/
@@ -67,6 +77,13 @@ namespace litejson
       }
   }
 
+/******************  json_array_value::add  ***************/
+
+  void json_array_value::add(json_value& val)
+  {
+    m_internal->add(val);
+  }
+
 /*****************  json_array_value::size  ***************/
 
   size_t json_array_value::size()
@@ -75,6 +92,21 @@ namespace litejson
       return 0;
     else
       return m_internal->size();
+  }
+
+  void json_array_value::print()
+  {
+    std::cout << "[";
+    if (m_internal->size() != 0)
+      {
+        for (int i = 0; i < m_internal->size(); i++)
+          {
+            at(i).print();
+            if (i != m_internal->size() - 1)
+              std::cout << "," << std::endl;
+          }
+      }
+    std::cout << "]";
   }
 
 }

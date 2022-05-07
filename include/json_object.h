@@ -18,8 +18,6 @@ namespace litejson
   class json_object_value : public json_value
   {
 
-    friend class int_json_object;
-
   protected:
 
     int_json_object* m_internal;
@@ -35,6 +33,11 @@ namespace litejson
      * Copy constructor
      */
     json_object_value(const json_object_value& other);
+
+    /**
+     * Destructor
+     */
+    ~json_object_value();
 
     /**
      * Assignment operator
@@ -67,6 +70,8 @@ namespace litejson
     json_object_value& as_object() { return *this; }
 
     void add_entry(const std::string& key, json_value& val);
+
+    virtual void print();
 
   };
 

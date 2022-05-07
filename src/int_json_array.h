@@ -44,6 +44,13 @@ namespace litejson
     json_value* at(size_t n);
 
     /**
+     * Add new value to the array
+     * 
+     * \param [in] val -- New value to add
+     */
+    void add(json_value& val);
+
+    /**
      * Return number of children values.
      */
     size_t size();

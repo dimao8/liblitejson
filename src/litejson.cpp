@@ -47,6 +47,12 @@ namespace litejson
         m_badbit = true;
         return;
       }
+
+    if (!syntax(&line))
+      {
+        m_badbit = true;
+        return;
+      }
   }
 
 /*********************  json_loader::lexical  *********************/
@@ -201,26 +207,21 @@ namespace litejson
   {
     int index = 0;
 
-    if (parse_node(&m_root, &index))
-      return true;
-    else
-      {
-        clear_tree();
-        return false;
-      }
+    m_root = parse_node(&index);
+
+    return m_root != nullptr;
   }
 
 /********************  json_loader::parse_node  *******************/
 
-  bool json_loader::parse_node(json_value** val, int* index)
+  json_value* json_loader::parse_node(int* index)
   {
     std::string name;
+    json_value* val;
     json_value* local_val;
-    json_object_value obj_val;
-    json_array_value array_val;
 
-    if (val == nullptr)
-      return false;
+    if (*index >= m_tokens.size())
+      return nullptr;
 
     switch (m_tokens[*index].type)
       {
@@ -228,6 +229,7 @@ namespace litejson
       case token::tok_operator:
         if (m_tokens[*index].text[0] == '{')                    // Object
           {
+            val = new json_object_value();
             (*index)++;
             while (true)
               {
@@ -235,7 +237,8 @@ namespace litejson
                 if (m_tokens[*index].type != token::tok_string)
                   {
                     std::cerr << "Syntax error (" << m_tokens[*index].line << "): String expected" << std::endl;
-                    return false;
+                    delete val;
+                    return nullptr;
                   }
 
                 name = m_tokens[*index].text;
@@ -245,18 +248,23 @@ namespace litejson
                 if (m_tokens[*index].type != token::tok_operator || m_tokens[*index].text[0] != ':')
                   {
                     std::cerr << "Syntax error (" << m_tokens[*index].line << "): ``:\'\' expected" << std::endl;
-                    return false;
+                    delete val;
+                    return nullptr;
                   }
 
                 (*index)++;
 
                 // Get value
-                if (!parse_node(&local_val, index))
-                  return false;
+                local_val = parse_node(index);
+                if (local_val == nullptr)
+                  {
+                    delete val;
+                    return nullptr;
+                  }
 
-                obj_val = (*val)->as_object();
-                if (obj_val != empty_object_value)
-                  obj_val.add_entry(name, *local_val);
+                local_val->print();
+                std::cout << std::endl;
+                val->as_object().add_entry(name, *local_val);
 
                 if (m_tokens[*index].type == token::tok_operator)
                   {
@@ -266,44 +274,101 @@ namespace litejson
                         continue;
                       }
                     else if (m_tokens[*index].text[0] == '}')
-                      break;
+                      {
+                        (*index)++;
+                        break;
+                      }
                     else
                       {
                         std::cerr << "Syntax error (" << m_tokens[*index].line << "): ``"
                                   << m_tokens[*index].text << "\'\' is not allowed here" << std::endl;
-                        return false;
+                        delete val;
+                        return nullptr;
                       }
                   }
                 else
                   {
                     std::cerr << "Syntax error (" << m_tokens[*index].line << "): ``"
                               << m_tokens[*index].text << "\'\' is not allowed here" << std::endl;
-                    return false;
+                    delete val;
+                    return nullptr;
                   }
               }
+            return val;
           }
         else if (m_tokens[*index].text[0] == '[')               // Array
           {
+            val = new json_array_value();
+            (*index)++;
 
+            while (true)
+              {
+                local_val = parse_node(index);
+                if (local_val == nullptr)
+                  {
+                    delete val;
+                    return nullptr;
+                  }
+
+                local_val->print();
+                val->as_array().add(*local_val);
+
+                if (m_tokens[*index].type == token::tok_operator)
+                  {
+                    if (m_tokens[*index].text[0] == ',')
+                      {
+                        (*index)++;
+                        continue;
+                      }
+                    else if (m_tokens[*index].text[0] == ']')
+                      {
+                        (*index)++;
+                        break;
+                      }
+                    else
+                      {
+                        std::cerr << "Syntax error (" << m_tokens[*index].line << "): ``"
+                                  << m_tokens[*index].text << "\'\' is not allowed here" << std::endl;
+                        delete val;
+                        return nullptr;
+                      }
+                  }
+                else
+                  {
+                    std::cerr << "Syntax error (" << m_tokens[*index].line << "): ``"
+                              << m_tokens[*index].text << "\'\' is not allowed here" << std::endl;
+                    delete val;
+                    return nullptr;
+                  }
+              }
           }
         else
           {
             std::cerr << "Syntax error (" << m_tokens[*index].line << "): ``"
                       << m_tokens[*index].text << "\'\' is not allowed here" << std::endl;
-            return false;
+            return nullptr;
           }
+        return val;
         break;
 
       case token::tok_null:                                     // Null
+        (*index)++;
+        return new json_value();
         break;
 
       case token::tok_boolean:                                  // Boolean
+        (*index)++;
+        return new json_boolean_value(m_tokens[*index - 1].text == "true");
         break;
 
       case token::tok_string:                                   // String
+        (*index)++;
+        return new json_string_value(m_tokens[*index - 1].text);
         break;
 
       case token::tok_number:                                   // Number
+        (*index)++;
+        return new json_numeric_value(std::atof(m_tokens[*index - 1].text.c_str()));
         break;
       }
   }
@@ -319,40 +384,24 @@ namespace litejson
 
   void json_loader::print_json_tree()
   {
-    if (!m_tokens.empty())
+    if (m_root == nullptr)
       {
-        for (auto it : m_tokens)
-          {
-            switch (it.type)
-              {
-
-              case token::tok_null:
-                std::cout << "null : ``";
-                break;
-
-              case token::tok_boolean:
-                std::cout << "boolean : ``";
-                break;
-
-              case token::tok_number:
-                std::cout << "number : ``";
-                break;
-
-              case token::tok_string:
-                std::cout << "string : ``";
-                break;
-
-              case token::tok_operator:
-                std::cout << "operator : ``";
-                break;
-
-              }
-
-            std::cout << it.text << "\'\'" << std::endl;
-          }
+        std::cout << "empty" << std::endl;
       }
     else
-      std::cout << "empty!" << std::endl;
+      {
+        m_root->print();
+      }
+  }
+
+/********************  json_loader::clear_tree  *******************/
+
+  void json_loader::clear_tree()
+  {
+    if (m_root != nullptr)
+      delete m_root;
+
+    m_root = nullptr;
   }
 
 }

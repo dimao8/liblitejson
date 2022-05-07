@@ -9,6 +9,8 @@
 
 #include <map>
 
+#include <json_object.h>
+
 namespace litejson
 {
 
@@ -19,6 +21,8 @@ namespace litejson
   {
 
   protected:
+
+    friend void json_object_value::print();
 
     std::map<std::string, json_value> m_values;       //!< JSON values in the object
 
