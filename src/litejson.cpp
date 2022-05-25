@@ -7,9 +7,6 @@
 #include <iostream>
 #include <cctype>
 
-#include "json_object.h"
-#include "json_array.h"
-
 namespace litejson
 {
 
