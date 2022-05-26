@@ -14,14 +14,14 @@ int main(int argc, char** argv)
 
   if (loader.bad())
     {
-      loader.print_json_tree();
+      loader.print_json_tree(std::cout);
       return -1;
     }
   // else if (loader.empty())
   //   return -2;
   else
     {
-      loader.print_json_tree();
+      loader.print_json_tree(std::cout);
       return 0;
     }
 }

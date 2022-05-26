@@ -5,7 +5,6 @@
 #include <json_value.h>
 
 #include <stdexcept>
-#include <iostream>
 #include <cmath>
 
 namespace litejson
@@ -15,38 +14,183 @@ namespace litejson
 
   json_value::json_value()
   : m_value_type(t_null),
-    m_data(nullptr)
+    m_data_smartptr(nullptr, [&](void* p)
+    {
+      switch (m_value_type)
+        {
+
+        case t_string:
+          delete reinterpret_cast<std::string*>(p);
+          break;
+
+        case t_boolean:
+          delete reinterpret_cast<bool*>(p);
+          break;
+
+        case t_number:
+          delete reinterpret_cast<float*>(p);
+          break;
+
+        case t_array:
+          for (auto it : *(reinterpret_cast<value_array_t*>(p)))
+            delete it;
+          delete reinterpret_cast<value_array_t*>(p);
+          break;
+
+        case t_object:
+          for (auto it : *(reinterpret_cast<value_object_t*>(p)))
+            delete it.second;
+          delete reinterpret_cast<value_object_t*>(p);
+          break;
+
+        default:
+          break;
+
+        }
+    })
   {
     //ctor
+  }
+
+/*******************  json_value::json_value  *******************/
+
+  json_value::json_value(float f)
+  : m_value_type(t_number),
+    m_data_smartptr(new float(f), [&](void* p)
+    {
+      switch (m_value_type)
+        {
+
+        case t_string:
+          delete reinterpret_cast<std::string*>(p);
+          break;
+
+        case t_boolean:
+          delete reinterpret_cast<bool*>(p);
+          break;
+
+        case t_number:
+          delete reinterpret_cast<float*>(p);
+          break;
+
+        case t_array:
+          for (auto it : *(reinterpret_cast<value_array_t*>(p)))
+            delete it;
+          delete reinterpret_cast<value_array_t*>(p);
+          break;
+
+        case t_object:
+          for (auto it : *(reinterpret_cast<value_object_t*>(p)))
+            delete it.second;
+          delete reinterpret_cast<value_object_t*>(p);
+          break;
+
+        default:
+          break;
+
+        }
+    })
+  {
+    // ctor
+  }
+
+/*******************  json_value::json_value  *******************/
+
+  json_value::json_value(bool b)
+  : m_value_type(t_boolean),
+    m_data_smartptr(new bool(b), [&](void* p)
+    {
+      switch (m_value_type)
+        {
+
+        case t_string:
+          delete reinterpret_cast<std::string*>(p);
+          break;
+
+        case t_boolean:
+          delete reinterpret_cast<bool*>(p);
+          break;
+
+        case t_number:
+          delete reinterpret_cast<float*>(p);
+          break;
+
+        case t_array:
+          for (auto it : *(reinterpret_cast<value_array_t*>(p)))
+            delete it;
+          delete reinterpret_cast<value_array_t*>(p);
+          break;
+
+        case t_object:
+          for (auto it : *(reinterpret_cast<value_object_t*>(p)))
+            delete it.second;
+          delete reinterpret_cast<value_object_t*>(p);
+          break;
+
+        default:
+          break;
+
+        }
+    })
+  {
+    // ctor
+  }
+
+/*******************  json_value::json_value  *******************/
+
+  json_value::json_value(const std::string& str)
+  : m_value_type(t_string),
+    m_data_smartptr(new std::string(str), [&](void* p)
+    {
+      switch (m_value_type)
+        {
+
+        case t_string:
+          delete reinterpret_cast<std::string*>(p);
+          break;
+
+        case t_boolean:
+          delete reinterpret_cast<bool*>(p);
+          break;
+
+        case t_number:
+          delete reinterpret_cast<float*>(p);
+          break;
+
+        case t_array:
+          for (auto it : *(reinterpret_cast<value_array_t*>(p)))
+            delete it;
+          delete reinterpret_cast<value_array_t*>(p);
+          break;
+
+        case t_object:
+          for (auto it : *(reinterpret_cast<value_object_t*>(p)))
+            delete it.second;
+          delete reinterpret_cast<value_object_t*>(p);
+          break;
+
+        default:
+          break;
+
+        }
+    })
+  {
+    // ctor
   }
 
 /*******************  json_value::~json_value  ******************/
 
   json_value::~json_value()
   {
-    if (m_data != nullptr)
-      {
-        if (m_value_type == t_array)
-          {
-            for (auto it : *(reinterpret_cast<value_array_t*>(m_data)))
-              delete it;
-          }
-        else if (m_value_type == t_object)
-          {
-            for (auto it : *(reinterpret_cast<value_object_t*>(m_data)))
-              delete it.second;
-          }
-        delete m_data;
-      }
+    // dtor
   }
 
 /*******************  json_value::json_value  *******************/
 
   json_value::json_value(const json_value& other)
-  : m_value_type(other.m_value_type),
-    m_data(other.m_data)
+  : m_value_type(other.m_value_type)
   {
-    //copy ctor
+    m_data_smartptr = other.m_data_smartptr;
   }
 
 /********************  json_value::operator=  *******************/
@@ -55,9 +199,7 @@ namespace litejson
   {
     if (this == &other) return *this; // handle self assignment
     
-    if (m_data != nullptr)
-      delete m_data;
-    m_data = other.m_data;
+    m_data_smartptr = other.m_data_smartptr;
     m_value_type = other.m_value_type;
     return *this;
   }
@@ -114,7 +256,7 @@ namespace litejson
       }
     else
       {
-        return *(reinterpret_cast<std::string*>(m_data));
+        return *(std::static_pointer_cast<std::string>(m_data_smartptr));
       }
   }
 
@@ -128,7 +270,7 @@ namespace litejson
       }
     else
       {
-        return nearbyint(*(reinterpret_cast<float*>(m_data)));
+        return nearbyint(*(std::static_pointer_cast<float>(m_data_smartptr)));
       }
   }
 
@@ -142,7 +284,7 @@ namespace litejson
       }
     else
       {
-        return *(reinterpret_cast<float*>(m_data));
+        return *(std::static_pointer_cast<float>(m_data_smartptr));
       }
   }
 
@@ -156,7 +298,7 @@ namespace litejson
       }
     else
       {
-        return *(reinterpret_cast<bool*>(m_data));
+        return *(std::static_pointer_cast<bool>(m_data_smartptr));
       }
   }
 
@@ -170,8 +312,8 @@ namespace litejson
       }
     else
       {
-        if (index < reinterpret_cast<value_array_t*>(m_data)->size())
-          return reinterpret_cast<value_array_t*>(m_data)->at(index);
+        if (index < std::static_pointer_cast<value_array_t>(m_data_smartptr)->size())
+          return std::static_pointer_cast<value_array_t>(m_data_smartptr)->at(index);
         else
           return nullptr;
       }
@@ -187,8 +329,8 @@ namespace litejson
       }
     else
       {
-        auto it = reinterpret_cast<value_object_t*>(m_data)->find(key);
-        if (it != reinterpret_cast<value_object_t*>(m_data)->end())
+        auto it = std::static_pointer_cast<value_object_t>(m_data_smartptr)->find(key);
+        if (it != std::static_pointer_cast<value_object_t>(m_data_smartptr)->end())
           return it->second;
         else
           return nullptr;
@@ -197,7 +339,7 @@ namespace litejson
 
 /**********************  json_value::print  *********************/
 
-  void json_value::print(std::fstream& stream)
+  void json_value::print(std::ostream& stream)
   {
     int sz;
     value_object_t::const_iterator it;
@@ -223,7 +365,7 @@ namespace litejson
 
       case t_array:
         stream << "[" << std::endl;
-        sz = reinterpret_cast<value_array_t*>(m_data)->size();
+        sz = std::static_pointer_cast<value_array_t>(m_data_smartptr)->size();
         if (sz != 0)
           {
             for (int i = 0; i < sz; i++)
@@ -240,11 +382,11 @@ namespace litejson
 
       case t_object:
         stream << "{" << std::endl;
-        sz = reinterpret_cast<value_object_t*>(m_data)->size();
+        sz = std::static_pointer_cast<value_object_t>(m_data_smartptr)->size();
         if (sz != 0)
           {
-            for (it = reinterpret_cast<value_object_t*>(m_data)->begin();
-                 it != reinterpret_cast<value_object_t*>(m_data)->end(); it++)
+            for (it = std::static_pointer_cast<value_object_t>(m_data_smartptr)->begin();
+                 it != std::static_pointer_cast<value_object_t>(m_data_smartptr)->end(); it++)
               {
                 stream << "\"" << it->first << " : ";
                 it->second->print(stream);
@@ -255,6 +397,40 @@ namespace litejson
         break;
 
       }
+  }
+
+/*****************  json_value::add_array_entry  ****************/
+
+  void json_value::add_array_entry(json_value* val)
+  {
+    if (m_value_type == t_null)
+      {
+        m_data_smartptr = std::make_shared<value_array_t>();
+      }
+    else if (m_value_type != t_array)
+      {
+        m_data_smartptr = nullptr;
+        m_data_smartptr = std::make_shared<value_array_t>();
+      }
+    
+    std::static_pointer_cast<value_array_t>(m_data_smartptr)->push_back(val);
+  }
+
+/*****************  json_value::add_object_entry  ***************/
+
+  void json_value::add_object_entry(const std::string& key, json_value* val)
+  {
+    if (m_value_type == t_null)
+      {
+        m_data_smartptr = std::make_shared<value_object_t>();
+      }
+    else if (m_value_type != t_object)
+      {
+        m_data_smartptr = nullptr;
+        m_data_smartptr = std::make_shared<value_object_t>();
+      }
+    
+    std::static_pointer_cast<value_object_t>(m_data_smartptr)->at(key) = val;
   }
 
 }

@@ -6,6 +6,7 @@
 #define LITEJSON_H
 
 #include <string>
+#include <ostream>
 #include <fstream>
 #include <vector>
 
@@ -100,7 +101,7 @@ namespace litejson
      * Print JSON tree to stdout
      * 
      */
-    void print_json_tree();
+    void print_json_tree(std::ostream& stream);
 
     /**
      * Delete JSON tree

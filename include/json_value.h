@@ -8,20 +8,15 @@
 #include <string>
 #include <vector>
 #include <map>
-#include <fstream>
+#include <ostream>
+#include <memory>
 
 namespace litejson
 {
 
   /**
-   * \defgroup json_value_classes JSON value classes
-   */
-
-  /**
    * JSON Value class
    * JSON parser unit. Parse single JSON file and manage it.
-   * \addtogroup json_value_classes
-   * \{
    */
   class json_value
   {
@@ -44,7 +39,7 @@ namespace litejson
     typedef std::vector<json_value*> value_array_t;
     typedef std::map<std::string, json_value*> value_object_t;
 
-    void* m_data;
+    std::shared_ptr<void> m_data_smartptr;
 
   public:
 
@@ -60,6 +55,7 @@ namespace litejson
 
     /**
      * Copy constructor from another JSON Value object.
+     * This is not exactly the copying. It's just pointer copy.
      * 
      * \param [in] other -- JSON Value to copy from
      * 
@@ -68,7 +64,44 @@ namespace litejson
     json_value(const json_value& other);
 
     /**
-     * Assignment opertor
+     * Construct a new json value from number. Set the type of json value as t_number
+     * 
+     * \param [in] f -- Float or int value
+     */
+    json_value(float f);
+
+    /**
+     * Construct a new json value from boolean. Set the type of json value as t_boolean
+     * 
+     * \param [in] b -- Boolean value
+     */
+    json_value(bool b);
+
+    /**
+     * Construct a new json value from string. Set the type of json value as t_string
+     * 
+     * \param [in] str -- String value
+     */
+    json_value(const std::string& str);
+
+    /**
+     * Convert value to the array (if needed) and add new entry
+     * 
+     * \param [in] val -- New entry
+     */
+    void add_array_entry(json_value* val);
+
+    /**
+     * Convert value to the object (if needed) and add new entry
+     * 
+     * \param [in] key -- New entry key
+     * \param [in] val -- New entry value
+     */
+    void add_object_entry(const std::string& key, json_value* val);
+
+    /**
+     * Assignment operator. This is not exactly the copying.
+     * It's just pointer copy.
      * 
      * \note Old content of the JSON Value object will be lost.
      */
@@ -112,13 +145,9 @@ namespace litejson
     virtual json_value* as_array(int index);
     virtual json_value* as_object(const std::string& key);
 
-    virtual void print(std::fstream& stream);
+    virtual void print(std::ostream& stream);
 
   };
-
-  /**
-   * \}
-   */
 
 }
 

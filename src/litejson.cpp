@@ -226,7 +226,7 @@ namespace litejson
       case token::tok_operator:
         if (m_tokens[*index].text[0] == '{')                    // Object
           {
-            val = new json_object_value();
+            val = new json_value();
             (*index)++;
             while (true)
               {
@@ -259,9 +259,9 @@ namespace litejson
                     return nullptr;
                   }
 
-                local_val->print();
+                local_val->print(std::cout);
                 std::cout << std::endl;
-                val->as_object().add_entry(name, *local_val);
+                val->add_object_entry(name, local_val);
 
                 if (m_tokens[*index].type == token::tok_operator)
                   {
@@ -295,7 +295,7 @@ namespace litejson
           }
         else if (m_tokens[*index].text[0] == '[')               // Array
           {
-            val = new json_array_value();
+            val = new json_value();
             (*index)++;
 
             while (true)
@@ -307,8 +307,8 @@ namespace litejson
                     return nullptr;
                   }
 
-                local_val->print();
-                val->as_array().add(*local_val);
+                local_val->print(std::cout);
+                val->add_array_entry(local_val);
 
                 if (m_tokens[*index].type == token::tok_operator)
                   {
@@ -355,17 +355,17 @@ namespace litejson
 
       case token::tok_boolean:                                  // Boolean
         (*index)++;
-        return new json_boolean_value(m_tokens[*index - 1].text == "true");
+        return new json_value(m_tokens[*index - 1].text == "true");
         break;
 
       case token::tok_string:                                   // String
         (*index)++;
-        return new json_string_value(m_tokens[*index - 1].text);
+        return new json_value(m_tokens[*index - 1].text);
         break;
 
       case token::tok_number:                                   // Number
         (*index)++;
-        return new json_numeric_value(std::atof(m_tokens[*index - 1].text.c_str()));
+        return new json_value((float)std::atof(m_tokens[*index - 1].text.c_str()));
         break;
       }
   }
@@ -379,15 +379,15 @@ namespace litejson
 
 /*****************  json_loader::print_json_tree  *****************/
 
-  void json_loader::print_json_tree()
+  void json_loader::print_json_tree(std::ostream& stream)
   {
     if (m_root == nullptr)
       {
-        std::cout << "empty" << std::endl;
+        stream << "empty" << std::endl;
       }
     else
       {
-        m_root->print();
+        m_root->print(stream);
       }
   }
 
