@@ -360,7 +360,7 @@ namespace litejson
         break;
 
       case t_string:
-        stream << "\"" << as_float() << "\"";
+        stream << "\"" << as_string() << "\"";
         break;
 
       case t_array:
@@ -388,7 +388,7 @@ namespace litejson
             for (it = std::static_pointer_cast<value_object_t>(m_data_smartptr)->begin();
                  it != std::static_pointer_cast<value_object_t>(m_data_smartptr)->end(); it++)
               {
-                stream << "\"" << it->first << " : ";
+                stream << "\"" << it->first << "\" : ";
                 it->second->print(stream);
                 stream << "," << std::endl;
               }
@@ -413,6 +413,7 @@ namespace litejson
         m_data_smartptr = std::make_shared<value_array_t>();
       }
     
+    m_value_type = t_array;
     std::static_pointer_cast<value_array_t>(m_data_smartptr)->push_back(val);
   }
 
@@ -430,7 +431,8 @@ namespace litejson
         m_data_smartptr = std::make_shared<value_object_t>();
       }
     
-    std::static_pointer_cast<value_object_t>(m_data_smartptr)->at(key) = val;
+    m_value_type = t_object;
+    (*std::static_pointer_cast<value_object_t>(m_data_smartptr))[key] = val;
   }
 
 }

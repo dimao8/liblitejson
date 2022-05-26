@@ -259,8 +259,6 @@ namespace litejson
                     return nullptr;
                   }
 
-                local_val->print(std::cout);
-                std::cout << std::endl;
                 val->add_object_entry(name, local_val);
 
                 if (m_tokens[*index].type == token::tok_operator)
@@ -307,7 +305,6 @@ namespace litejson
                     return nullptr;
                   }
 
-                local_val->print(std::cout);
                 val->add_array_entry(local_val);
 
                 if (m_tokens[*index].type == token::tok_operator)
