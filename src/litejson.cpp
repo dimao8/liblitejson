@@ -364,7 +364,14 @@ namespace litejson
         (*index)++;
         return new json_value((float)std::atof(m_tokens[*index - 1].text.c_str()));
         break;
+
+      default:
+        std::cerr << "Syntax error (" << m_tokens[*index].line << "): ``"
+                      << m_tokens[*index].text << "\'\' is not allowed here" << std::endl;
+        return nullptr;
       }
+
+    return val;
   }
 
 /***********************  json_loader::bad  ***********************/
