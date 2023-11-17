@@ -10,66 +10,6 @@
 namespace litejson
 {
 
-// TODO : Debug code -->
-std::ostream &
-operator<< (std::ostream &stream, const Token &tok)
-{
-  std::cout << "Token(";
-
-  switch (tok.type)
-    {
-
-    case TokenType::Colon:
-      std::cout << "Colon";
-      break;
-
-    case TokenType::Comma:
-      std::cout << "Comma";
-      break;
-
-    case TokenType::False:
-      std::cout << "False";
-      break;
-
-    case TokenType::Lbrace:
-      std::cout << "Lbrace";
-      break;
-
-    case TokenType::Lbracket:
-      std::cout << "Lbracket";
-      break;
-
-    case TokenType::Null:
-      std::cout << "Null";
-      break;
-
-    case TokenType::Number:
-      std::cout << "Number";
-      break;
-
-    case TokenType::Rbrace:
-      std::cout << "Rbrace";
-      break;
-
-    case TokenType::Rbracket:
-      std::cout << "Rbracket";
-      break;
-
-    case TokenType::String:
-      std::cout << "String";
-      break;
-
-    case TokenType::True:
-      std::cout << "True";
-      break;
-    }
-
-  std::cout << ", ``" << tok.text << "\'\')";
-
-  return stream;
-}
-// <--
-
 /* ************************* JSONLoader::JSONLoader ************************ */
 
 JSONLoader::JSONLoader () : m_badbit (false)
@@ -103,16 +43,22 @@ JSONLoader::JSONLoader (const std::string &file_name) : m_badbit (false)
 
   ifs.close ();
 
-  for (auto it : m_tokens)
-    std::cout << it << std::endl;
-
   // Try syntax
-  // if (!syntax (n))
-  //   {
-  //     m_tokens.clear ();
-  //     m_badbit = true;
-  //     return;
-  //   }
+  if (!syntax (n))
+    {
+      m_tokens.clear ();
+      clear_tree ();
+      m_badbit = true;
+      return;
+    }
+}
+
+/* ************************** JSONValue::get_root ************************** */
+
+const JSONValue &
+JSONLoader::get_root () const
+{
+  return m_root;
 }
 
 /* ************************** JSONLoader::lexical ************************** */
@@ -321,6 +267,123 @@ JSONLoader::parse_string (std::string &str, int n)
 bool
 JSONLoader::syntax (int &n)
 {
+  std::list<Token>::const_iterator it = m_tokens.begin ();
+
+  m_root = get_value (it);
+
+  return m_root.is_valid ();
+}
+
+/* ************************* JSONLoader::get_value ************************* */
+
+const JSONValue
+JSONLoader::get_value (std::list<Token>::const_iterator &it)
+{
+  JSONValue val;
+  JSONValue child;
+  std::string name;
+
+  if (it == m_tokens.end ())
+    return JSONValue::invalid_value;
+
+  switch (it->type)
+    {
+
+    case TokenType::Null:
+      val = JSONValue ();
+      it++;
+      return val;
+
+    case TokenType::True:
+      val = JSONValue (true);
+      it++;
+      return val;
+
+    case TokenType::False:
+      val = JSONValue (false);
+      it++;
+      return val;
+
+    case TokenType::String:
+      val = JSONValue (it->text);
+      it++;
+      return val;
+
+    case TokenType::Number:
+      val = JSONValue (static_cast<float> (std::atof (it->text.c_str ())));
+      it++;
+      return val;
+
+    case TokenType::Lbrace:
+      it++; // Skip lbrace
+      while (true)
+        {
+          if (it->type == TokenType::String) // Pair
+            {
+              name = it->text;
+              it++; // Skip name
+              if (it->type != TokenType::Colon)
+                {
+                  std::cout << "[E] Syntax error (" << it->line
+                            << "): ``:\'\' expected at token ``" << it->text
+                            << "\'\'" << std::endl;
+                  return JSONValue::invalid_value;
+                }
+              it++; // Skip colon
+              child = get_value (it);
+              if (child.is_valid ())
+                val.add_object_entry (name, child);
+              else
+                return JSONValue::invalid_value;
+              if (it->type == TokenType::Comma) // Skip comma
+                it++;
+            }
+          else if (it->type == TokenType::Rbrace) // rbrace
+            {
+              it++;
+              break;
+            }
+          else
+            {
+              std::cout << "[E] Syntax error (" << it->line
+                        << "): string or ``}\'\' expected at token ``"
+                        << it->text << "\'\'" << std::endl;
+              return JSONValue::invalid_value;
+            }
+        }
+      return val;
+
+    case TokenType::Lbracket:
+      it++; // Skip lbracket
+      while (true)
+        {
+          if (it->type == TokenType::Rbracket)
+            {
+              it++;
+              break;
+            }
+          else
+            {
+              child = get_value (it);
+              if (child.is_valid ())
+                val.add_array_entry (child);
+              else
+                return JSONValue::invalid_value;
+
+              if (it->type == TokenType::Comma) // Skip comma
+                it++;
+            }
+        }
+      return val;
+
+    default:
+      std::cout
+          << "[E] Syntax error (" << it->line
+          << "): ``null\'\', ``true\'\', ``false\'\', string, number, ``[\'\' "
+             "or ``]\'\' expected at token ``"
+          << it->text << "\'\'" << std::endl;
+      return JSONValue::invalid_value;
+    }
 }
 
 /* *************************** JSONLoader::is_bad ************************** */
@@ -336,6 +399,7 @@ JSONLoader::is_bad ()
 void
 JSONLoader::clear_tree ()
 {
+  m_root = JSONValue ();
 }
 
 /* ******************************* operator<< ****************************** */
@@ -343,6 +407,8 @@ JSONLoader::clear_tree ()
 std::ostream &
 operator<< (std::ostream &stream, const JSONLoader &loader)
 {
+  stream << loader.m_root;
+  return stream;
 }
 
 }

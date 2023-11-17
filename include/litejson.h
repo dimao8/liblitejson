@@ -10,7 +10,7 @@
 #include <ostream>
 #include <string>
 
-// #include "json_value.h"
+#include "jsonvalue.h"
 
 namespace litejson
 {
@@ -52,7 +52,8 @@ struct Token
     line = l;
   }
 
-  Token operator= (const Token& token)
+  Token
+  operator= (const Token &token)
   {
     type = token.type;
     text = token.text;
@@ -69,8 +70,7 @@ class JSONLoader
 {
 
 private:
-  // json_value * m_root;                                //!< Root element of
-  // the JSON tree
+  JSONValue m_root;          /// Root element of the JSON tree
   bool m_badbit;             /// Bad flag for JSON parser
   std::list<Token> m_tokens; /// Token list
 
@@ -103,11 +103,10 @@ private:
   /// Parse token list and extract current node. This function
   /// must be called recursively to parse whole JSON file.
   ///
-  /// \param [in] node         -- Node, which receives children from JSON
-  /// \param [in, out] index   -- Index of the current token
+  /// \param [in, out]
   /// \return Extracted node or nullptr
   ///
-  // json_value *parse_node (int *index);
+  const JSONValue get_value (std::list<Token>::const_iterator &it);
 
 public:
   ///
@@ -132,6 +131,11 @@ public:
   /// Delete JSON tree
   ///
   void clear_tree ();
+
+  ///
+  /// \brief Get root JSONValue
+  ///
+  const JSONValue & get_root () const;
 
   ///
   /// \brief Write JSON tree to the output stream.

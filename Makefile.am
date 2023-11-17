@@ -1,10 +1,12 @@
 ACLOCAL_AMFLAGS = -I m4
 
 lib_LTLIBRARIES = liblitejson.la
-liblitejson_la_SOURCES = src/litejson.cpp
+liblitejson_la_SOURCES = src/litejson.cpp \
+	src/jsonvalue.cpp
 liblitejson_la_CXXFLAGS = -I$(srcdir)/include -pedantic
 
-include_HERADERS = include/litejson.h
+include_HERADERS = include/litejson.h \
+	src/jsonvalue.h
 
 LIBTOOL_DEPS = @LIBTOOL_DEPS@
 libtool: $(LIBTOOL_DEPS)

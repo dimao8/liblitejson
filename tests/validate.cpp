@@ -12,6 +12,8 @@ int main(int argc, char** argv)
 
   litejson::JSONLoader loader(argv[1]);
 
+  std::cout << loader.get_root () << std::endl;
+
   if (loader.is_bad())
     return -1;
   else
