@@ -15,3 +15,5 @@ ltmain.sh
 Makefile.in
 missing
 test-driver
+111.json
+NOTE.html

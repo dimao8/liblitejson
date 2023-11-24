@@ -1,0 +1,3 @@
+#! /bin/sh
+
+./tests/validate tests/literal_invalid.json

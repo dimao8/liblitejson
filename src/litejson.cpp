@@ -4,398 +4,520 @@
 
 #include <litejson.h>
 
+#include <iomanip>
 #include <iostream>
-#include <cctype>
+#include <locale>
 
 namespace litejson
 {
 
-/*******************  json_loader::json_loader  *******************/
+/* ************************* JSONLoader::JSONLoader ************************ */
 
-  json_loader::json_loader()
-  : m_root(nullptr),
-    m_badbit(false)
-  {
-    // TODO : Constructor
-  }
+JSONLoader::JSONLoader () : m_badbit (false)
+{
+  // TODO : Constructor
+}
 
+/* ************************* JSONLoader::JSONLoader ************************ */
 
-/*******************  json_loader::json_loader  *******************/
+JSONLoader::JSONLoader (const std::string &file_name) : m_badbit (false)
+{
+  std::ifstream ifs (file_name);
+  if (!ifs)
+    {
+      std::cout << "[E] Can not open file ``" << file_name << "\'\'"
+                << std::endl;
+      m_badbit = true;
+      return;
+    }
 
-  json_loader::json_loader(const std::string& file_name)
-  : m_root(nullptr),
-    m_badbit(false)
-  {
-    int line;
+  int n = 0;
 
-    std::ifstream ifs(file_name);
+  // Try lexical
+  if (!lexical (ifs, n))
+    {
+      m_tokens.clear ();
+      m_badbit = true;
+      ifs.close ();
+      return;
+    }
 
-    if (!ifs)
-      {
-        m_badbit = true;
-        return;
-      }
+  ifs.close ();
 
-    // Lexical analysis
-    if (!lexical(ifs, &line))
-      {
-        std::cerr << "Lexical error(" << line << ")" << std::endl;
-        std::cerr.flush();
-        m_badbit = true;
-        return;
-      }
+  // Try syntax
+  if (!syntax (n))
+    {
+      m_tokens.clear ();
+      clear_tree ();
+      m_badbit = true;
+      return;
+    }
+}
 
-    if (!syntax(&line))
-      {
-        m_badbit = true;
-        return;
-      }
-  }
+/* ************************* JSONLoader::hextochar ************************* */
 
-/*********************  json_loader::lexical  *********************/
+bool
+JSONLoader::hextochar (std::string::iterator &it, int &result)
+{
+  result = 0;
 
-  bool json_loader::lexical(std::ifstream& stream, int* n)
-  {
-    std::string str;
+  for (auto i = 0; i < 4; i++)
+    {
+      result <<= 4;
+      if (*it >= '0' && *it <= '9')
+        result += *it - '0';
+      else if (*it >= 'A' && *it <= 'F')
+        result += *it - 'A' + 10;
+      else if (*it >= 'a' && *it <= 'f')
+        result += *it - 'a' + 10;
+      else
+        return false;
+      it++;
+    }
 
-    *n = 0;
+  return true;
+}
 
-    while (!std::getline(stream, str).eof())
-      {
-        (*n)++;
-        if (!parse_string(str, *n))
-          return false;
-      }
+/* ************************ JSONLoader::utf32toutf8s *********************** */
 
-    return true;
-  }
+const std::string
+JSONLoader::utf32toutf8s (int c)
+{
+  std::string s;
 
-/*******************  json_loader::parse_string  ******************/
+  if (c < 128)
+    s.push_back (c);
+  else if (c < 2048)
+    {
+      s.push_back (0xC0 | ((c & 0xFC0) >> 6));
+      s.push_back ((c & 0x3F) | 0x80);
+    }
+  else if (c < 65536)
+    {
+      s.push_back (0xE0 | ((c & 0xF000) >> 12));
+      s.push_back (0x80 | ((c & 0xFC0) >> 6));
+      s.push_back ((c & 0x3F) | 0x80);
+    }
+  else
+    {
+      s.push_back (0xF0 | ((c & 0x380000) >> 18));
+      s.push_back (0x80 | ((c & 0xF000) >> 12));
+      s.push_back (0x80 | ((c & 0xFC0) >> 6));
+      s.push_back ((c & 0x3F) | 0x80);
+    }
 
-  bool json_loader::parse_string(std::string& str, int n)
-  {
-    auto it = str.begin();
-    std::string str_token;
+  return s;
+}
 
-    while (*it)
-      {
-        str_token.clear();
-        if (*it == '\"')                            // String
-          {
-            it++;
-            while (*it != '\"')
-              {
-                if (*it == 0)
-                  return false;
-                else
-                  str_token.push_back(*it);
-                it++;
-              }
-            it++;
-            m_tokens.emplace_back(token::tok_string, str_token, n);
-            // TODO : Extract coded characters
-          }
-        else if (*it == '-' || std::isdigit(*it))   // Numeric
-          {
-            if (*it == '-')                         // Extract mantissa sign
-              {
-                str_token.push_back(*it);
-                it++;
-              }
+/* ************************** JSONValue::get_root ************************** */
 
-            if (!std::isdigit(*it))                      // Extract mantissa integer part
+const JSONValue &
+JSONLoader::get_root () const
+{
+  return m_root;
+}
+
+/* ************************** JSONLoader::lexical ************************** */
+
+bool
+JSONLoader::lexical (std::ifstream &stream, int &n)
+{
+  std::string str;
+
+  while (!stream.eof ())
+    {
+      n++;
+      std::getline (stream, str);
+      if (!parse_string (str, n))
+        return false;
+    }
+
+  return true;
+}
+
+/* ************************ JSONLoader::parse_string *********************** */
+
+bool
+JSONLoader::parse_string (std::string &str, int n)
+{
+  auto it = str.begin ();
+  std::locale neutral_locale ("C");
+  std::string s;
+  int utf32;
+
+  while (it != str.end ())
+    {
+      if (std::isspace (*it, neutral_locale)) // Skip spaces
+        it++;
+      else if (std::isdigit (*it, neutral_locale)
+               || *it == '-') // Something like number
+        {
+          s.clear ();
+          // Check for -
+          if (*it == '-')
+            {
+              s.push_back (*it);
+              it++;
+            }
+
+          // Check for integer part
+          if (std::isdigit (*it, neutral_locale))
+            {
+              if (*it
+                  == '0') // Check 0 route. It must not contain other digits
+                {
+                  s.push_back (*it);
+                  it++;
+                }
+              else
+                {
+                  s.push_back (*it);
+                  it++;
+                  while (std::isdigit (*it, neutral_locale))
+                    {
+                      s.push_back (*it);
+                      it++;
+                    }
+                }
+            }
+
+          // Check for fractional part
+          if (*it == '.')
+            {
+              s.push_back (*it);
+              it++;
+              while (std::isdigit (*it, neutral_locale))
+                {
+                  s.push_back (*it);
+                  it++;
+                }
+            }
+
+          // Check for exponent
+          if (*it == 'e' || *it == 'E')
+            {
+              s.push_back ('e');
+              it++;
+
+              if (*it == '-' || *it == '+')
+                {
+                  s.push_back (*it);
+                  it++;
+                }
+
+              while (std::isdigit (*it, neutral_locale))
+                {
+                  s.push_back (*it);
+                  it++;
+                }
+            }
+
+          m_tokens.emplace_back (TokenType::Number, s, n);
+          continue;
+        }
+      else if (std::isalpha (*it, neutral_locale)) // Something like keyword
+        {
+          s.clear ();
+          while (std::isalpha (*it, neutral_locale))
+            {
+              s.push_back (*it);
+              it++;
+            }
+          if (s == "null")
+            {
+              m_tokens.emplace_back (TokenType::Null, s, n);
+              continue;
+            }
+          else if (s == "true")
+            {
+              m_tokens.emplace_back (TokenType::True, s, n);
+              continue;
+            }
+          else if (s == "false")
+            {
+              m_tokens.emplace_back (TokenType::False, s, n);
+              continue;
+            }
+          else
+            {
+              std::cout << "[E] Syntax error (" << n
+                        << "): unexpected literal ``" << s << "\'\'"
+                        << std::endl;
               return false;
-            while (std::isdigit(*it))
-              {
-                str_token.push_back(*it);
-                it++;
-              }
+            }
+        }
+      else
+        {
+          s.clear ();
+          switch (*it)
+            {
 
-            if (*it == '.')                         // Extract decimal point
-              {
-                str_token.push_back(*it);
-                it++;
+            case '\"': // Something like string
+              it++;
+              while (it != str.end ())
+                {
+                  if (*it == '\\') // Skipped
+                    {
+                      it++;
+                      if (*it == '\"' || *it == '\\' || *it == '/')
+                        {
+                          s.push_back (*it);
+                          it++;
+                        }
+                      else if (*it == 'r')
+                        {
+                          s.push_back ('\x0D');
+                          it++;
+                        }
+                      else if (*it == 't')
+                        {
+                          s.push_back ('\x09');
+                          it++;
+                        }
+                      else if (*it == 'n')
+                        {
+                          s.push_back ('\x0A');
+                          it++;
+                        }
+                      else if (*it == 'f')
+                        {
+                          s.push_back ('\x0C');
+                          it++;
+                        }
+                      else if (*it == 'b')
+                        {
+                          s.push_back ('\x08');
+                          it++;
+                        }
+                      else if (*it == 'u')
+                        {
+                          it++;
+                          if (!hextochar (it, utf32))
+                            {
+                              std::cout << "[E] Syntax error (" << n
+                                        << "): wrong string sequence"
+                                        << std::endl;
+                              return false;
+                            }
+                          s += utf32toutf8s (utf32);
+                        }
+                      else
+                        {
+                          std::cout << "[E] Syntax error (" << n
+                                    << "): wrong string sequence" << std::endl;
+                          return false;
+                        }
+                    }
+                  else if (*it == '\"')
+                    break;
+                  else
+                    {
+                      s.push_back (*it);
+                      it++;
+                    }
+                }
+              if (*it == '\"')
+                {
+                  it++;
+                  m_tokens.emplace_back (TokenType::String, s, n);
+                }
+              else
+                {
+                  std::cout << "[E] Syntax error (" << n << "): \" expected"
+                            << std::endl;
+                }
+              break;
 
-                if (!std::isdigit(*it))                  // Extract fractional part
-                  return false;
-                
-                while (std::isdigit(*it))
-                  {
-                    str_token.push_back(*it);
-                    it++;
-                  }
-              }
+            case '{': // lbrace
+              m_tokens.emplace_back (TokenType::Lbrace, "{", n);
+              it++;
+              break;
 
-            if (*it == 'e' || *it == 'E')           // Extract exponent character
-              {
-                str_token.push_back(*it);
-                it++;
+            case '}': // rbrace
+              m_tokens.emplace_back (TokenType::Rbrace, "}", n);
+              it++;
+              break;
 
-                if (*it == '-')                     // Extract exponent sign
-                  {
-                    str_token.push_back(*it);
-                    it++;
-                  }
+            case '[': // lbracket
+              m_tokens.emplace_back (TokenType::Lbracket, "[", n);
+              it++;
+              break;
 
-                if (!std::isdigit(*it))                  // Extract exponent part
-                  return false;
+            case ']': // rbracket
+              m_tokens.emplace_back (TokenType::Rbracket, "]", n);
+              it++;
+              break;
 
-                while (std::isdigit(*it))
-                  {
-                    str_token.push_back(*it);
-                    it++;
-                  }
-              }
+            case ',': // comma
+              m_tokens.emplace_back (TokenType::Comma, ",", n);
+              it++;
+              break;
 
-            m_tokens.emplace_back(token::tok_number, str_token, n);
-          }
-        else if ((*it == '{')                       // Operator
-                || (*it == '}')
-                || (*it == '[')
-                || (*it == ']')
-                || (*it == ':')
-                || (*it == ','))
-          {
-            str_token.push_back(*it);
-            m_tokens.emplace_back(token::tok_operator, str_token, n);
-            it++;
-          }
-        else if (std::isalpha(*it))                 // null, false, true
-          {
-            while (std::isalpha(*it))
-              {
-                str_token.push_back(*it);
-                it++;
-              }
+            case ':': // colon
+              m_tokens.emplace_back (TokenType::Colon, ":", n);
+              it++;
+              break;
 
-            if (str_token == "null")
-              {
-                m_tokens.emplace_back(token::tok_null, str_token, n);
-              }
-            else if (str_token == "true")
-              {
-                m_tokens.emplace_back(token::tok_boolean, str_token, n);
-              }
-            else if (str_token == "false")
-              {
-                m_tokens.emplace_back(token::tok_boolean, str_token, n);
-              }
-            else
+            default: // Some trash )))
+              std::cout << "[E] Lexical error (" << n
+                        << "): unexpected character ``" << *it << "\'\'"
+                        << std::endl;
               return false;
-          }
-        else if (isspace(*it))
-          {
-            it++;
-          }
-        else if (*it == 0)
-          {
-            return true;
-          }
-        else
-          return false;
-      }
+            }
+          continue;
+        }
+    }
 
-    return true;
-  }
+  return true;
+}
 
-/**********************  json_loader::syntax  *********************/
+/* *************************** JSONLoader::syntax ************************** */
 
-  bool json_loader::syntax(int* n)
-  {
-    int index = 0;
+bool
+JSONLoader::syntax (int &n)
+{
+  std::list<Token>::const_iterator it = m_tokens.begin ();
 
-    m_root = parse_node(&index);
+  m_root = get_value (it);
 
-    return m_root != nullptr;
-  }
+  return m_root.is_valid ();
+}
 
-/********************  json_loader::parse_node  *******************/
+/* ************************* JSONLoader::get_value ************************* */
 
-  json_value* json_loader::parse_node(int* index)
-  {
-    std::string name;
-    json_value* val;
-    json_value* local_val;
+const JSONValue
+JSONLoader::get_value (std::list<Token>::const_iterator &it)
+{
+  JSONValue val;
+  JSONValue child;
+  std::string name;
 
-    if (*index >= m_tokens.size())
-      return nullptr;
+  if (it == m_tokens.end ())
+    return JSONValue::invalid_value;
 
-    switch (m_tokens[*index].type)
-      {
+  switch (it->type)
+    {
 
-      case token::tok_operator:
-        if (m_tokens[*index].text[0] == '{')                    // Object
-          {
-            val = new json_value();
-            (*index)++;
-            while (true)
-              {
-                // Get name
-                if (m_tokens[*index].type != token::tok_string)
-                  {
-                    std::cerr << "Syntax error (" << m_tokens[*index].line << "): String expected" << std::endl;
-                    delete val;
-                    return nullptr;
-                  }
+    case TokenType::Null:
+      val = JSONValue ();
+      it++;
+      return val;
 
-                name = m_tokens[*index].text;
-                (*index)++;
+    case TokenType::True:
+      val = JSONValue (true);
+      it++;
+      return val;
 
-                // Get :
-                if (m_tokens[*index].type != token::tok_operator || m_tokens[*index].text[0] != ':')
-                  {
-                    std::cerr << "Syntax error (" << m_tokens[*index].line << "): ``:\'\' expected" << std::endl;
-                    delete val;
-                    return nullptr;
-                  }
+    case TokenType::False:
+      val = JSONValue (false);
+      it++;
+      return val;
 
-                (*index)++;
+    case TokenType::String:
+      val = JSONValue (it->text);
+      it++;
+      return val;
 
-                // Get value
-                local_val = parse_node(index);
-                if (local_val == nullptr)
-                  {
-                    delete val;
-                    return nullptr;
-                  }
+    case TokenType::Number:
+      val = JSONValue (static_cast<float> (std::atof (it->text.c_str ())));
+      it++;
+      return val;
 
-                val->add_object_entry(name, local_val);
+    case TokenType::Lbrace:
+      it++; // Skip lbrace
+      while (true)
+        {
+          if (it->type == TokenType::String) // Pair
+            {
+              name = it->text;
+              it++; // Skip name
+              if (it->type != TokenType::Colon)
+                {
+                  std::cout << "[E] Syntax error (" << it->line
+                            << "): ``:\'\' expected at token ``" << it->text
+                            << "\'\'" << std::endl;
+                  return JSONValue::invalid_value;
+                }
+              it++; // Skip colon
+              child = get_value (it);
+              if (child.is_valid ())
+                val.add_object_entry (name, child);
+              else
+                return JSONValue::invalid_value;
+              if (it->type == TokenType::Comma) // Skip comma
+                it++;
+            }
+          else if (it->type == TokenType::Rbrace) // rbrace
+            {
+              it++;
+              break;
+            }
+          else
+            {
+              std::cout << "[E] Syntax error (" << it->line
+                        << "): string or ``}\'\' expected at token ``"
+                        << it->text << "\'\'" << std::endl;
+              return JSONValue::invalid_value;
+            }
+        }
+      return val;
 
-                if (m_tokens[*index].type == token::tok_operator)
-                  {
-                    if (m_tokens[*index].text[0] == ',')
-                      {
-                        (*index)++;
-                        continue;
-                      }
-                    else if (m_tokens[*index].text[0] == '}')
-                      {
-                        (*index)++;
-                        break;
-                      }
-                    else
-                      {
-                        std::cerr << "Syntax error (" << m_tokens[*index].line << "): ``"
-                                  << m_tokens[*index].text << "\'\' is not allowed here" << std::endl;
-                        delete val;
-                        return nullptr;
-                      }
-                  }
-                else
-                  {
-                    std::cerr << "Syntax error (" << m_tokens[*index].line << "): ``"
-                              << m_tokens[*index].text << "\'\' is not allowed here" << std::endl;
-                    delete val;
-                    return nullptr;
-                  }
-              }
-            return val;
-          }
-        else if (m_tokens[*index].text[0] == '[')               // Array
-          {
-            val = new json_value();
-            (*index)++;
+    case TokenType::Lbracket:
+      it++; // Skip lbracket
+      while (true)
+        {
+          if (it->type == TokenType::Rbracket)
+            {
+              it++;
+              break;
+            }
+          else
+            {
+              child = get_value (it);
+              if (child.is_valid ())
+                val.add_array_entry (child);
+              else
+                return JSONValue::invalid_value;
 
-            while (true)
-              {
-                local_val = parse_node(index);
-                if (local_val == nullptr)
-                  {
-                    delete val;
-                    return nullptr;
-                  }
+              if (it->type == TokenType::Comma) // Skip comma
+                it++;
+            }
+        }
+      return val;
 
-                val->add_array_entry(local_val);
+    default:
+      std::cout
+          << "[E] Syntax error (" << it->line
+          << "): ``null\'\', ``true\'\', ``false\'\', string, number, ``[\'\' "
+             "or ``]\'\' expected at token ``"
+          << it->text << "\'\'" << std::endl;
+      return JSONValue::invalid_value;
+    }
+}
 
-                if (m_tokens[*index].type == token::tok_operator)
-                  {
-                    if (m_tokens[*index].text[0] == ',')
-                      {
-                        (*index)++;
-                        continue;
-                      }
-                    else if (m_tokens[*index].text[0] == ']')
-                      {
-                        (*index)++;
-                        break;
-                      }
-                    else
-                      {
-                        std::cerr << "Syntax error (" << m_tokens[*index].line << "): ``"
-                                  << m_tokens[*index].text << "\'\' is not allowed here" << std::endl;
-                        delete val;
-                        return nullptr;
-                      }
-                  }
-                else
-                  {
-                    std::cerr << "Syntax error (" << m_tokens[*index].line << "): ``"
-                              << m_tokens[*index].text << "\'\' is not allowed here" << std::endl;
-                    delete val;
-                    return nullptr;
-                  }
-              }
-          }
-        else
-          {
-            std::cerr << "Syntax error (" << m_tokens[*index].line << "): ``"
-                      << m_tokens[*index].text << "\'\' is not allowed here" << std::endl;
-            return nullptr;
-          }
-        return val;
-        break;
+/* *************************** JSONLoader::is_bad ************************** */
 
-      case token::tok_null:                                     // Null
-        (*index)++;
-        return new json_value();
-        break;
+bool
+JSONLoader::is_bad ()
+{
+  return m_badbit;
+}
 
-      case token::tok_boolean:                                  // Boolean
-        (*index)++;
-        return new json_value(m_tokens[*index - 1].text == "true");
-        break;
+/* ************************* JSONLoader::clear_tree ************************ */
 
-      case token::tok_string:                                   // String
-        (*index)++;
-        return new json_value(m_tokens[*index - 1].text);
-        break;
+void
+JSONLoader::clear_tree ()
+{
+  m_root = JSONValue ();
+}
 
-      case token::tok_number:                                   // Number
-        (*index)++;
-        return new json_value((float)std::atof(m_tokens[*index - 1].text.c_str()));
-        break;
-      }
-  }
+/* ******************************* operator<< ****************************** */
 
-/***********************  json_loader::bad  ***********************/
-
-  bool json_loader::bad()
-  {
-    return m_badbit;
-  }
-
-/*****************  json_loader::print_json_tree  *****************/
-
-  void json_loader::print_json_tree(std::ostream& stream)
-  {
-    if (m_root == nullptr)
-      {
-        stream << "empty" << std::endl;
-      }
-    else
-      {
-        m_root->print(stream);
-      }
-  }
-
-/********************  json_loader::clear_tree  *******************/
-
-  void json_loader::clear_tree()
-  {
-    if (m_root != nullptr)
-      delete m_root;
-
-    m_root = nullptr;
-  }
+std::ostream &
+operator<< (std::ostream &stream, const JSONLoader &loader)
+{
+  stream << loader.m_root;
+  return stream;
+}
 
 }
