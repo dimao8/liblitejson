@@ -4,6 +4,7 @@
 
 #include <litejson.h>
 
+#include <iomanip>
 #include <iostream>
 #include <locale>
 
@@ -53,6 +54,61 @@ JSONLoader::JSONLoader (const std::string &file_name) : m_badbit (false)
     }
 }
 
+/* ************************* JSONLoader::hextochar ************************* */
+
+bool
+JSONLoader::hextochar (std::string::iterator &it, int &result)
+{
+  result = 0;
+
+  for (auto i = 0; i < 4; i++)
+    {
+      result <<= 4;
+      if (*it >= '0' && *it <= '9')
+        result += *it - '0';
+      else if (*it >= 'A' && *it <= 'F')
+        result += *it - 'A' + 10;
+      else if (*it >= 'a' && *it <= 'f')
+        result += *it - 'a' + 10;
+      else
+        return false;
+      it++;
+    }
+
+  return true;
+}
+
+/* ************************ JSONLoader::utf32toutf8s *********************** */
+
+const std::string
+JSONLoader::utf32toutf8s (int c)
+{
+  std::string s;
+
+  if (c < 128)
+    s.push_back (c);
+  else if (c < 2048)
+    {
+      s.push_back (0xC0 | ((c & 0xFC0) >> 6));
+      s.push_back ((c & 0x3F) | 0x80);
+    }
+  else if (c < 65536)
+    {
+      s.push_back (0xE0 | ((c & 0xF000) >> 12));
+      s.push_back (0x80 | ((c & 0xFC0) >> 6));
+      s.push_back ((c & 0x3F) | 0x80);
+    }
+  else
+    {
+      s.push_back (0xF0 | ((c & 0x380000) >> 18));
+      s.push_back (0x80 | ((c & 0xF000) >> 12));
+      s.push_back (0x80 | ((c & 0xFC0) >> 6));
+      s.push_back ((c & 0x3F) | 0x80);
+    }
+
+  return s;
+}
+
 /* ************************** JSONValue::get_root ************************** */
 
 const JSONValue &
@@ -87,6 +143,7 @@ JSONLoader::parse_string (std::string &str, int n)
   auto it = str.begin ();
   std::locale neutral_locale ("C");
   std::string s;
+  int utf32;
 
   while (it != str.end ())
     {
@@ -199,7 +256,59 @@ JSONLoader::parse_string (std::string &str, int n)
               it++;
               while (it != str.end ())
                 {
-                  if (*it == '\"')
+                  if (*it == '\\') // Skipped
+                    {
+                      it++;
+                      if (*it == '\"' || *it == '\\' || *it == '/')
+                        {
+                          s.push_back (*it);
+                          it++;
+                        }
+                      else if (*it == 'r')
+                        {
+                          s.push_back ('\x0D');
+                          it++;
+                        }
+                      else if (*it == 't')
+                        {
+                          s.push_back ('\x09');
+                          it++;
+                        }
+                      else if (*it == 'n')
+                        {
+                          s.push_back ('\x0A');
+                          it++;
+                        }
+                      else if (*it == 'f')
+                        {
+                          s.push_back ('\x0C');
+                          it++;
+                        }
+                      else if (*it == 'b')
+                        {
+                          s.push_back ('\x08');
+                          it++;
+                        }
+                      else if (*it == 'u')
+                        {
+                          it++;
+                          if (!hextochar (it, utf32))
+                            {
+                              std::cout << "[E] Syntax error (" << n
+                                        << "): wrong string sequence"
+                                        << std::endl;
+                              return false;
+                            }
+                          s += utf32toutf8s (utf32);
+                        }
+                      else
+                        {
+                          std::cout << "[E] Syntax error (" << n
+                                    << "): wrong string sequence" << std::endl;
+                          return false;
+                        }
+                    }
+                  else if (*it == '\"')
                     break;
                   else
                     {

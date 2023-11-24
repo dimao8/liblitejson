@@ -305,11 +305,6 @@ operator<< (std::ostream &stream, const JSONValue &val)
       break;
 
     case JSONValueType::Object:
-      stream << "size of object: "
-             << (std::static_pointer_cast<value_object_t> (
-                     val.m_data_smartptr))
-                    ->size ()
-             << std::endl;
       stream << "{" << std::endl;
       for (auto it :
            *(std::static_pointer_cast<value_object_t> (val.m_data_smartptr)))

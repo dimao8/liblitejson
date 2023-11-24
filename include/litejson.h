@@ -75,6 +75,21 @@ private:
   std::list<Token> m_tokens; /// Token list
 
   ///
+  /// \brief Convert 4-digit hex to utf32 value
+  /// \param [in] it      -- Input string iterator
+  /// \param [out] result -- Output value
+  /// \return Return false if string does not contain valid UTF16 sequence
+  ///
+  bool hextochar (std::string::iterator &it, int &result);
+
+  ///
+  /// \brief Convert utf32 value to the utf8 sequence
+  /// \param [in] c -- Input UTF32 character
+  /// \return Return UTF8 sequence equivalent
+  ///
+  const std::string utf32toutf8s(int c);
+
+  ///
   /// Make lexical analysis
   ///
   /// \param [in] stream -- Stream to extract strings
@@ -135,7 +150,7 @@ public:
   ///
   /// \brief Get root JSONValue
   ///
-  const JSONValue & get_root () const;
+  const JSONValue &get_root () const;
 
   ///
   /// \brief Write JSON tree to the output stream.

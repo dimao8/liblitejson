@@ -18,7 +18,14 @@ TESTS = tests/t_array \
 	tests/t_number \
 	tests/t_object \
 	tests/t_string \
-	tests/t_true
+	tests/t_true \
+	tests/t_string_invalid \
+	tests/t_number_invalid \
+	tests/t_literal_invalid
+
+XFAIL_TESTS = tests/t_string_invalid \
+	tests/t_number_invalid \
+	tests/t_literal_invalid
 
 check_PROGRAMS = tests/validate
 
