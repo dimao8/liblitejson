@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ([2.69])
-AC_INIT([liblitejson], [0.2.0.1dev], [dimao8@yandex.ru])
+AC_INIT([liblitejson], [0.2.0.2dev], [dimao8@yandex.ru])
 AC_CONFIG_SRCDIR([src/litejson.cpp])
 AC_CONFIG_HEADERS([config.h])
 AM_INIT_AUTOMAKE([1.10 foreign subdir-objects silent-rules])
@@ -36,7 +36,18 @@ AC_CONFIG_LINKS([tests/array.json:tests/array.json
   tests/string.json:tests/string.json
   tests/true.json:tests/true.json
   tests/string_invalid.json:tests/string_invalid.json
-  tests/number_invalid.json:tests/number_invalid.json
-  tests/literal_invalid.json:tests/literal_invalid.json])
+  tests/number_invalid1.json:tests/number_invalid1.json
+  tests/number_invalid2.json:tests/number_invalid2.json
+  tests/number_invalid3.json:tests/number_invalid3.json
+  tests/number_invalid4.json:tests/number_invalid4.json
+  tests/number_invalid5.json:tests/number_invalid5.json
+  tests/number_invalid6.json:tests/number_invalid6.json
+  tests/literal_invalid.json:tests/literal_invalid.json
+  tests/array_invalid1.json:tests/array_invalid1.json
+  tests/array_invalid2.json:tests/array_invalid2.json
+  tests/object_invalid1.json:tests/object_invalid1.json
+  tests/object_invalid2.json:tests/object_invalid2.json
+  tests/object_invalid3.json:tests/object_invalid3.json
+  tests/object_invalid4.json:tests/object_invalid4.json])
 AC_CONFIG_FILES([Makefile])
 AC_OUTPUT

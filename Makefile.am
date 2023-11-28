@@ -6,11 +6,24 @@ liblitejson_la_SOURCES = src/litejson.cpp \
 liblitejson_la_CXXFLAGS = -I$(srcdir)/include -pedantic
 
 include_HERADERS = include/litejson.h \
-	src/jsonvalue.h
+	include/jsonvalue.h
 
 LIBTOOL_DEPS = @LIBTOOL_DEPS@
 libtool: $(LIBTOOL_DEPS)
 	$(SHELL) ./config.status libtool
+
+noinst_DATA = tests/t_array \
+	tests/t_false \
+	tests/t_null \
+	tests/t_number \
+	tests/t_object \
+	tests/t_string \
+	tests/t_true \
+	tests/t_string_invalid \
+	tests/t_number_invalid \
+	tests/t_literal_invalid \
+	tests/t_array_invalid \
+	tests/t_object_invalid
 
 TESTS = tests/t_array \
 	tests/t_false \
@@ -21,11 +34,15 @@ TESTS = tests/t_array \
 	tests/t_true \
 	tests/t_string_invalid \
 	tests/t_number_invalid \
-	tests/t_literal_invalid
+	tests/t_literal_invalid \
+	tests/t_array_invalid \
+	tests/t_object_invalid
 
 XFAIL_TESTS = tests/t_string_invalid \
 	tests/t_number_invalid \
-	tests/t_literal_invalid
+	tests/t_literal_invalid \
+	tests/t_array_invalid \
+	tests/t_object_invalid
 
 check_PROGRAMS = tests/validate
 

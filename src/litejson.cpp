@@ -149,8 +149,8 @@ JSONLoader::parse_string (std::string &str, int n)
     {
       if (std::isspace (*it, neutral_locale)) // Skip spaces
         it++;
-      else if (std::isdigit (*it, neutral_locale)
-               || *it == '-') // Something like number
+      else if (std::isdigit (*it, neutral_locale) // Something like number
+               || *it == '-')
         {
           s.clear ();
           // Check for -
@@ -204,6 +204,14 @@ JSONLoader::parse_string (std::string &str, int n)
                   s.push_back (*it);
                   it++;
                 }
+              
+              if (!std::isdigit (*it, neutral_locale))
+                {
+                  std::cout << "[E] Lexical error (" << n
+                        << "): digit expected"
+                        << std::endl;
+                  return false;
+                }
 
               while (std::isdigit (*it, neutral_locale))
                 {
@@ -240,7 +248,7 @@ JSONLoader::parse_string (std::string &str, int n)
             }
           else
             {
-              std::cout << "[E] Syntax error (" << n
+              std::cout << "[E] Lixical error (" << n
                         << "): unexpected literal ``" << s << "\'\'"
                         << std::endl;
               return false;
@@ -294,7 +302,7 @@ JSONLoader::parse_string (std::string &str, int n)
                           it++;
                           if (!hextochar (it, utf32))
                             {
-                              std::cout << "[E] Syntax error (" << n
+                              std::cout << "[E] Lexical error (" << n
                                         << "): wrong string sequence"
                                         << std::endl;
                               return false;
@@ -303,7 +311,7 @@ JSONLoader::parse_string (std::string &str, int n)
                         }
                       else
                         {
-                          std::cout << "[E] Syntax error (" << n
+                          std::cout << "[E] Lexical error (" << n
                                     << "): wrong string sequence" << std::endl;
                           return false;
                         }
@@ -323,7 +331,7 @@ JSONLoader::parse_string (std::string &str, int n)
                 }
               else
                 {
-                  std::cout << "[E] Syntax error (" << n << "): \" expected"
+                  std::cout << "[E] Lexical error (" << n << "): \" expected"
                             << std::endl;
                 }
               break;
@@ -391,6 +399,7 @@ JSONLoader::get_value (std::list<Token>::const_iterator &it)
   JSONValue val;
   JSONValue child;
   std::string name;
+  std::list<Token>::const_iterator prev_it;
 
   if (it == m_tokens.end ())
     return JSONValue::invalid_value;
@@ -446,6 +455,26 @@ JSONLoader::get_value (std::list<Token>::const_iterator &it)
                 return JSONValue::invalid_value;
               if (it->type == TokenType::Comma) // Skip comma
                 it++;
+              else if (it->type == TokenType::Rbrace)
+                continue;
+              else
+                {
+                  if (it == m_tokens.end ())
+                    {
+                      prev_it = it;
+                      prev_it--;
+                      std::cout << "[E] Syntax error (" << prev_it->line
+                                << "): unexpected end of file" << std::endl;
+                      return JSONValue::invalid_value;
+                    }
+                  else
+                    {
+                      std::cout << "[E] Syntax error (" << it->line
+                                << "): ``}\'\' or ``,\'\' expected at token ``"
+                                << it->text << "\'\'" << std::endl;
+                      return JSONValue::invalid_value;
+                    }
+                }
             }
           else if (it->type == TokenType::Rbrace) // rbrace
             {
@@ -454,10 +483,21 @@ JSONLoader::get_value (std::list<Token>::const_iterator &it)
             }
           else
             {
-              std::cout << "[E] Syntax error (" << it->line
-                        << "): string or ``}\'\' expected at token ``"
-                        << it->text << "\'\'" << std::endl;
-              return JSONValue::invalid_value;
+              if (it == m_tokens.end ())
+                {
+                  prev_it = it;
+                  prev_it--;
+                  std::cout << "[E] Syntax error (" << prev_it->line
+                            << "): unexpected end of file" << std::endl;
+                  return JSONValue::invalid_value;
+                }
+              else
+                {
+                  std::cout << "[E] Syntax error (" << it->line
+                            << "): string or ``}\'\' expected at token ``"
+                            << it->text << "\'\'" << std::endl;
+                  return JSONValue::invalid_value;
+                }
             }
         }
       return val;
@@ -481,6 +521,15 @@ JSONLoader::get_value (std::list<Token>::const_iterator &it)
 
               if (it->type == TokenType::Comma) // Skip comma
                 it++;
+              else if (it->type == TokenType::Rbracket) // Continue with ]
+                continue;
+              else
+                {
+                  std::cout << "[E] Syntax error (" << it->line
+                            << "): ``]\'\' or ``,\'\' expected at token ``"
+                            << it->text << "\'\'" << std::endl;
+                  return JSONValue::invalid_value;
+                }
             }
         }
       return val;

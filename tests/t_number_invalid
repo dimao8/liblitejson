@@ -1,3 +1,22 @@
 #! /bin/sh
 
-./tests/validate tests/number_invalid.json
+./tests/validate tests/number_invalid1.json
+result1=$?
+./tests/validate tests/number_invalid2.json
+result2=$?
+./tests/validate tests/number_invalid3.json
+result3=$?
+./tests/validate tests/number_invalid4.json
+result4=$?
+./tests/validate tests/number_invalid5.json
+result5=$?
+./tests/validate tests/number_invalid6.json
+result6=$?
+
+if [[ "$result1" = "0" || "$result2" = "0"
+      || "$result3" = "0" || "$result4" = "0"
+      || "$result5" = "0" || "$result6" = "0" ]]; then
+  exit 0
+else
+  exit 255
+fi
