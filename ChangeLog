@@ -1,0 +1,4 @@
+Version 0.2.0.3alpha
+
+    -- Change object values enumeration. There is no ``Out of range'' error
+       now. Instead invalid_value JSONValue object has been returned.

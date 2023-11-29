@@ -207,14 +207,16 @@ JSONValue::as_object (const std::string &key, size_t index) const
   if (m_value_type != JSONValueType::Object)
     throw std::runtime_error ("Not an object");
   else if (index >= object_key_size (key))
-    throw std::out_of_range ("Index is out of range");
+    return invalid_value;
   else
     {
       range = (std::static_pointer_cast<value_object_t> (m_data_smartptr))
                   ->equal_range (key);
       it = range.first;
       if (index)
-        for (auto i = 0; i < index; i++, it++) {}
+        for (auto i = 0; i < index; i++, it++)
+          {
+          }
       return it->second;
     }
 }
