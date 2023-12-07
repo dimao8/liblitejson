@@ -6,18 +6,26 @@
 
 #include <cmath>
 #include <iomanip>
+#include <iostream>
 #include <stdexcept>
 
 namespace litejson
 {
 
-const JSONValue JSONValue::invalid_value = JSONValue::invalid ();
+/* ************************* JSONValue::set_parent **************************/
+
+void
+JSONValue::set_parent (JSONValue *parent)
+{
+  m_parent = parent;
+}
 
 /* ************************** JSONValue::JSONValue ************************* */
 
 JSONValue::JSONValue ()
 {
-  m_data_smartptr.reset ();
+  m_parent = nullptr;
+  m_data_ptr = nullptr;
   m_value_type = JSONValueType::Null;
 }
 
@@ -25,7 +33,8 @@ JSONValue::JSONValue ()
 
 JSONValue::JSONValue (float f)
 {
-  m_data_smartptr = std::make_shared<float> (f);
+  m_parent = nullptr;
+  m_data_ptr = new float (f);
   m_value_type = JSONValueType::Number;
 }
 
@@ -33,7 +42,8 @@ JSONValue::JSONValue (float f)
 
 JSONValue::JSONValue (bool b)
 {
-  m_data_smartptr = std::make_shared<bool> (b);
+  m_parent = nullptr;
+  m_data_ptr = new bool (b);
   m_value_type = JSONValueType::Boolean;
 }
 
@@ -41,7 +51,8 @@ JSONValue::JSONValue (bool b)
 
 JSONValue::JSONValue (const std::string &str)
 {
-  m_data_smartptr = std::make_shared<std::string> (str);
+  m_parent = nullptr;
+  m_data_ptr = new std::string (str);
   m_value_type = JSONValueType::String;
 }
 
@@ -49,26 +60,50 @@ JSONValue::JSONValue (const std::string &str)
 
 JSONValue::~JSONValue ()
 {
-  // dtor
+  if (m_value_type == JSONValueType::Array)
+    {
+      for (auto it : *(reinterpret_cast<value_array_t *> (m_data_ptr)))
+        delete it;
+    }
+  else if (m_value_type == JSONValueType::Object)
+    {
+      for (auto it : *(reinterpret_cast<value_object_t *> (m_data_ptr)))
+        delete it.second;
+    }
+
+  if (m_data_ptr)
+    {
+      switch (m_value_type)
+        {
+
+        case JSONValueType::Number:
+          delete reinterpret_cast<float*>(m_data_ptr);
+          break;
+
+        case JSONValueType::String:
+          delete reinterpret_cast<std::string*>(m_data_ptr);
+          break;
+
+        case JSONValueType::Boolean:
+          delete reinterpret_cast<bool*>(m_data_ptr);
+          break;
+
+        case JSONValueType::Object:
+          delete reinterpret_cast<value_object_t*>(m_data_ptr);
+          break;
+
+        case JSONValueType::Array:
+          delete reinterpret_cast<value_array_t*>(m_data_ptr);
+          break;
+
+        default:
+          break;
+
+        }
+    }
 }
 
-/* ************************** JSONValue::JSONValue ************************* */
-
-JSONValue::JSONValue (const JSONValue &other)
-{
-  m_data_smartptr = other.m_data_smartptr;
-  m_value_type = other.m_value_type;
-}
-
-/* ************************** JSONValue::operator= ************************* */
-
-JSONValue &
-JSONValue::operator= (const JSONValue &other)
-{
-  m_data_smartptr = other.m_data_smartptr;
-  m_value_type = other.m_value_type;
-  return *this;
-}
+/* ************************** JSONValue::is_valid ************************** */
 
 bool
 JSONValue::is_valid () const
@@ -132,7 +167,7 @@ JSONValue::as_string () const
   if (m_value_type != JSONValueType::String)
     throw std::runtime_error ("Not a string");
   else
-    return *(std::static_pointer_cast<const std::string> (m_data_smartptr));
+    return *(reinterpret_cast<std::string *> (m_data_ptr));
 }
 
 /* ************************* JSONValue::as_integer ************************* */
@@ -143,8 +178,7 @@ JSONValue::as_integer () const
   if (m_value_type != JSONValueType::Number)
     throw std::runtime_error ("Not a number");
   else
-    return std::nearbyintf (
-        *(std::static_pointer_cast<float> (m_data_smartptr)));
+    return std::nearbyintf (*(reinterpret_cast<float *> (m_data_ptr)));
 }
 
 /* ************************** JSONValue::as_float ************************** */
@@ -155,7 +189,7 @@ JSONValue::as_float () const
   if (m_value_type != JSONValueType::Number)
     throw std::runtime_error ("Not a number");
   else
-    return *(std::static_pointer_cast<float> (m_data_smartptr));
+    return *(reinterpret_cast<float *> (m_data_ptr));
 }
 
 /* ************************* JSONValue::as_boolean ************************* */
@@ -166,22 +200,20 @@ JSONValue::as_boolean () const
   if (m_value_type != JSONValueType::Boolean)
     throw std::runtime_error ("Not a boolean");
   else
-    return *(std::static_pointer_cast<bool> (m_data_smartptr));
+    return *(reinterpret_cast<bool *> (m_data_ptr));
 }
 
 /* ************************** JSONValue::as_array ************************** */
 
-const JSONValue &
+JSONValue *
 JSONValue::as_array (int index) const
 {
   if (m_value_type != JSONValueType::Array)
     throw std::runtime_error ("Not an array");
-  else if (index >= (std::static_pointer_cast<value_array_t> (m_data_smartptr))
-                        ->size ())
+  else if (index >= reinterpret_cast<value_array_t *> (m_data_ptr)->size ())
     throw std::out_of_range ("Index is out of range");
   else
-    return (std::static_pointer_cast<value_array_t> (m_data_smartptr))
-        ->at (index);
+    return reinterpret_cast<value_array_t *> (m_data_ptr)->at (index);
 }
 
 /* *********************** JSONValue::object_key_size ********************** */
@@ -192,13 +224,12 @@ JSONValue::object_key_size (const std::string &key) const
   if (m_value_type != JSONValueType::Object)
     throw std::runtime_error ("Not an object");
   else
-    return (std::static_pointer_cast<value_object_t> (m_data_smartptr))
-        ->count (key);
+    return reinterpret_cast<value_object_t *> (m_data_ptr)->count (key);
 }
 
 /* ************************** JSONValue::as_object ************************* */
 
-const JSONValue &
+JSONValue *
 JSONValue::as_object (const std::string &key, size_t index) const
 {
   std::pair<value_object_t::iterator, value_object_t::iterator> range;
@@ -207,10 +238,10 @@ JSONValue::as_object (const std::string &key, size_t index) const
   if (m_value_type != JSONValueType::Object)
     throw std::runtime_error ("Not an object");
   else if (index >= object_key_size (key))
-    return invalid_value;
+    return nullptr;
   else
     {
-      range = (std::static_pointer_cast<value_object_t> (m_data_smartptr))
+      range = (reinterpret_cast<value_object_t *> (m_data_ptr))
                   ->equal_range (key);
       it = range.first;
       if (index)
@@ -224,30 +255,27 @@ JSONValue::as_object (const std::string &key, size_t index) const
 /* *********************** JSONValue::add_array_entry ********************** */
 
 void
-JSONValue::add_array_entry (const JSONValue &val)
+JSONValue::add_array_entry (JSONValue *val)
 {
   if (m_value_type != JSONValueType::Array)
-    {
-      m_value_type = JSONValueType::Array;
-      m_data_smartptr = std::make_shared<value_array_t> ();
-    }
+    throw std::runtime_error ("Not an array");
 
-  (std::static_pointer_cast<value_array_t> (m_data_smartptr))->push_back (val);
+  reinterpret_cast<value_array_t *> (m_data_ptr)->emplace_back (val);
+  auto it = --((reinterpret_cast<value_array_t *> (m_data_ptr))->end ());
+  (*it)->set_parent (this);
 }
 
 /* ********************** JSONValue::add_object_entry ********************** */
 
 void
-JSONValue::add_object_entry (const std::string &key, const JSONValue &val)
+JSONValue::add_object_entry (const std::string &key, JSONValue *val)
 {
   if (m_value_type != JSONValueType::Object)
-    {
-      m_value_type = JSONValueType::Object;
-      m_data_smartptr = std::make_shared<value_object_t> ();
-    }
+    throw std::runtime_error ("Not an object");
 
-  (std::static_pointer_cast<value_object_t> (m_data_smartptr))
-      ->emplace (key, val);
+  auto it
+      = (reinterpret_cast<value_object_t *> (m_data_ptr))->emplace (key, val);
+  it->second->set_parent (this);
 }
 
 /* ************************* JSONValue::array_size ************************* */
@@ -255,19 +283,24 @@ JSONValue::add_object_entry (const std::string &key, const JSONValue &val)
 size_t
 JSONValue::array_size () const
 {
-  if (m_value_type != JSONValueType::Boolean)
+  if (m_value_type != JSONValueType::Array)
     throw std::runtime_error ("Not an array");
   else
-    return (std::static_pointer_cast<value_array_t> (m_data_smartptr))
-        ->size ();
+    return (reinterpret_cast<value_array_t *> (m_data_ptr))->size ();
 }
 
-/* ******************************* operator<< ****************************** */
+/* **************************** JSONValue::print *************************** */
 
 std::ostream &
-operator<< (std::ostream &stream, const JSONValue &val)
+JSONValue::print (std::ostream &stream, int tab) const
 {
-  switch (val.m_value_type)
+  if (tab > 0)
+    {
+      for (auto i = 0; i < tab; i++)
+        stream << "  ";
+    }
+
+  switch (m_value_type)
     {
 
     case JSONValueType::Null:
@@ -275,31 +308,26 @@ operator<< (std::ostream &stream, const JSONValue &val)
       break;
 
     case JSONValueType::Number:
-      stream << val.as_float ();
+      stream << as_float ();
       break;
 
     case JSONValueType::String:
-      stream << "\"" << val.as_string () << "\"";
+      stream << "\"" << as_string () << "\"";
       break;
 
     case JSONValueType::Boolean:
-      stream << (val.as_boolean () ? "true" : "false");
+      stream << (as_boolean () ? "true" : "false");
       break;
 
     case JSONValueType::Array:
       stream << "[" << std::endl;
       for (size_t i = 0;
-           i < (std::static_pointer_cast<value_array_t> (val.m_data_smartptr))
-                   ->size ();
-           i++)
+           i < (reinterpret_cast<value_array_t *> (m_data_ptr))->size (); i++)
         {
-          stream << (std::static_pointer_cast<value_array_t> (
-                         val.m_data_smartptr))
-                        ->at (i);
+          ((reinterpret_cast<value_array_t *> (m_data_ptr))->at (i))
+              ->print (stream, tab + 1);
           if (i
-              < (std::static_pointer_cast<value_array_t> (val.m_data_smartptr))
-                        ->size ()
-                    - 1)
+              < (reinterpret_cast<value_array_t *> (m_data_ptr))->size () - 1)
             stream << ",";
           stream << std::endl;
         }
@@ -308,11 +336,16 @@ operator<< (std::ostream &stream, const JSONValue &val)
 
     case JSONValueType::Object:
       stream << "{" << std::endl;
-      for (auto it :
-           *(std::static_pointer_cast<value_object_t> (val.m_data_smartptr)))
+      for (auto it : *(reinterpret_cast<value_object_t *> (m_data_ptr)))
         {
+          if (tab > 0)
+            {
+              for (auto i = 0; i < tab + 1; i++)
+                stream << "  ";
+            }
           stream << "\"" << it.first << "\" : ";
-          stream << it.second << ",";
+          it.second->print (stream, tab);
+          stream << ",";
           stream << std::endl;
         }
       stream << "}" << std::endl;
@@ -322,15 +355,92 @@ operator<< (std::ostream &stream, const JSONValue &val)
   return stream;
 }
 
-/* *************************** JSONValue::invalid ************************** */
+/* ****************************** make_object ****************************** */
 
-JSONValue
-JSONValue::invalid ()
+JSONValue *
+JSONValue::make_object ()
 {
-  JSONValue val;
-  val.m_value_type = JSONValueType::Invalid;
-  val.m_data_smartptr.reset ();
+  JSONValue *val = new JSONValue ();
+  if (val == nullptr)
+    return nullptr;
+  val->m_data_ptr = new value_object_t ();
+  val->m_value_type = JSONValueType::Object;
+
   return val;
+}
+
+/* ******************************* make_array ****************************** */
+
+JSONValue *
+JSONValue::make_array ()
+{
+  JSONValue *val = new JSONValue ();
+  if (val == nullptr)
+    return nullptr;
+  val->m_data_ptr = new value_array_t ();
+  val->m_value_type = JSONValueType::Array;
+
+  return val;
+}
+
+/* ******************************* operator<< ****************************** */
+
+std::ostream &
+operator<< (std::ostream &stream, const JSONValue &val)
+{
+  return val.print (stream, 0);
+}
+
+/* *************************** JSONValue::parent *************************** */
+
+JSONValue *
+JSONValue::parent () const
+{
+  return m_parent;
+}
+
+std::ostream &
+JSONValue::print_ancestor (std::ostream &stream) const
+{
+  if (m_parent->is_valid ())
+    m_parent->print_ancestor (stream);
+  else
+    stream << "<root>";
+
+  stream << "<-";
+
+  switch (m_value_type)
+    {
+
+    case JSONValueType::Invalid:
+      stream << "(<invalid value>)";
+      break;
+
+    case JSONValueType::Null:
+      stream << "(null)";
+      break;
+
+    case JSONValueType::Number:
+      stream << "(number)";
+      break;
+
+    case JSONValueType::String:
+      stream << "(string)";
+      break;
+
+    case JSONValueType::Boolean:
+      stream << "(boolean)";
+      break;
+
+    case JSONValueType::Array:
+      stream << "(array)";
+      break;
+
+    case JSONValueType::Object:
+      stream << "(object)";
+      break;
+    }
+  return stream;
 }
 
 }

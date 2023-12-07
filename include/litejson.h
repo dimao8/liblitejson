@@ -70,7 +70,7 @@ class JSONLoader
 {
 
 private:
-  JSONValue m_root;          /// Root element of the JSON tree
+  JSONValue *m_root;          /// Root element of the JSON tree
   bool m_badbit;             /// Bad flag for JSON parser
   std::list<Token> m_tokens; /// Token list
 
@@ -121,7 +121,7 @@ private:
   /// \param [in, out]
   /// \return Extracted node or nullptr
   ///
-  const JSONValue get_value (std::list<Token>::const_iterator &it);
+  JSONValue *get_value (std::list<Token>::const_iterator &it);
 
 public:
   ///
@@ -150,7 +150,7 @@ public:
   ///
   /// \brief Get root JSONValue
   ///
-  const JSONValue &get_root () const;
+  JSONValue *get_root () const;
 
   ///
   /// \brief Write JSON tree to the output stream.

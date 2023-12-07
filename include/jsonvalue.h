@@ -6,7 +6,6 @@
 #define JSONVALUE_H
 
 #include <map>
-#include <memory>
 #include <ostream>
 #include <string>
 #include <vector>
@@ -30,8 +29,8 @@ enum class JSONValueType
 
 class JSONValue;
 
-typedef std::vector<JSONValue> value_array_t;
-typedef std::multimap<std::string, JSONValue> value_object_t;
+typedef std::vector<JSONValue *> value_array_t;
+typedef std::multimap<std::string, JSONValue *> value_object_t;
 
 ///
 /// \brief JSON Value class
@@ -42,8 +41,14 @@ class JSONValue
 {
 
 private:
-  std::shared_ptr<void> m_data_smartptr;
+  JSONValue *m_parent;
+  void *m_data_ptr;
   JSONValueType m_value_type;
+
+  ///
+  /// \brief Set parent JSONValue
+  ///
+  void set_parent (JSONValue *parent);
 
 public:
   ///
@@ -55,16 +60,6 @@ public:
   /// \brief Destructor
   ///
   virtual ~JSONValue ();
-
-  ///
-  /// \brief Copy constructor from another JSON Value object.
-  /// \param [in] other -- JSON Value to copy from
-  ///
-  /// This is not exactly the copying. It's just pointer copy.
-  ///
-  /// \note Old content of the JSON Value object will be lost.
-  ///
-  JSONValue (const JSONValue &other);
 
   ///
   /// \brief Constructor from float
@@ -99,7 +94,7 @@ public:
   ///
   /// Convert value to the array (if needed) and add new entry
   ///
-  void add_array_entry (const JSONValue &val);
+  void add_array_entry (JSONValue *val);
 
   ///
   /// \brief Add entry to the object
@@ -109,15 +104,7 @@ public:
   /// Convert value to the object (if needed) and add new entry
   ///
   ///
-  void add_object_entry (const std::string &key, const JSONValue &val);
-
-  ///
-  /// Assignment operator. This is not exactly the copying.
-  /// It's just pointer copy.
-  ///
-  /// \note Old content of the JSON Value object will be lost.
-  ///
-  JSONValue &operator= (const JSONValue &other);
+  void add_object_entry (const std::string &key, JSONValue *val);
 
   ///
   /// Is value valid
@@ -199,7 +186,7 @@ public:
   ///
   /// Try to extract JSONValue from array by index.
   ///
-  virtual const JSONValue &as_array (int index) const;
+  virtual JSONValue *as_array (int index) const;
 
   ///
   /// \brief Return size of the array
@@ -217,7 +204,7 @@ public:
   ///
   /// Try to extract JSONValue from object by key.
   ///
-  virtual const JSONValue &as_object (const std::string &key,
+  virtual JSONValue *as_object (const std::string &key,
                                       size_t index = 0) const;
 
   ///
@@ -230,11 +217,14 @@ public:
   ///
   virtual size_t object_key_size (const std::string &key) const;
 
+  JSONValue *parent () const;
+
+  std::ostream &print (std::ostream &stream, int tab) const;
+  std::ostream &print_ancestor (std::ostream &stream) const;
+
 public:
-  static const JSONValue invalid_value;
-
-  static JSONValue invalid ();
-
+  static JSONValue *make_object ();
+  static JSONValue *make_array ();
   friend std::ostream &operator<< (std::ostream &stream, const JSONValue &val);
 };
 
