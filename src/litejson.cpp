@@ -408,32 +408,33 @@ JSONLoader::get_value (std::list<Token>::const_iterator &it)
     {
 
     case TokenType::Null:
-      val = new JSONValue ();
+      val = new JSONValue (it->line);
       it++;
       return val;
 
     case TokenType::True:
-      val = new JSONValue (true);
+      val = new JSONValue (true, it->line);
       it++;
       return val;
 
     case TokenType::False:
-      val = new JSONValue (false);
+      val = new JSONValue (false, it->line);
       it++;
       return val;
 
     case TokenType::String:
-      val = new JSONValue (it->text);
+      val = new JSONValue (it->text, it->line);
       it++;
       return val;
 
     case TokenType::Number:
-      val = new JSONValue (static_cast<float> (std::atof (it->text.c_str ())));
+      val = new JSONValue (static_cast<float> (std::atof (it->text.c_str ())),
+                           it->line);
       it++;
       return val;
 
     case TokenType::Lbrace:
-      val = JSONValue::make_object ();
+      val = JSONValue::make_object (it->line);
       it++; // Skip lbrace
       while (true)
         {
@@ -513,7 +514,7 @@ JSONLoader::get_value (std::list<Token>::const_iterator &it)
 
     case TokenType::Lbracket:
       it++; // Skip lbracket
-      val = JSONValue::make_array ();
+      val = JSONValue::make_array (it->line);
       while (true)
         {
           if (it->type == TokenType::Rbracket)

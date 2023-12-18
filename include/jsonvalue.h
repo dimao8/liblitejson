@@ -44,6 +44,7 @@ private:
   JSONValue *m_parent;
   void *m_data_ptr;
   JSONValueType m_value_type;
+  int m_line;
 
   ///
   /// \brief Set parent JSONValue
@@ -54,7 +55,7 @@ public:
   ///
   /// \brief Default constructor
   ///
-  JSONValue ();
+  JSONValue (int line);
 
   ///
   /// \brief Destructor
@@ -68,7 +69,7 @@ public:
   /// Construct a new json value from number. Set the type of json value as
   /// t_number
   ///
-  JSONValue (float f);
+  JSONValue (float f, int line);
 
   ///
   /// \brief Constructor from boolean
@@ -77,7 +78,7 @@ public:
   /// Construct a new json value from boolean. Set the type of json value as
   /// t_boolean
   ///
-  JSONValue (bool b);
+  JSONValue (bool b, int line);
 
   ///
   /// \brief Constructor from string
@@ -86,7 +87,7 @@ public:
   /// Construct a new json value from string. Set the type of json value as
   /// t_string
   ///
-  JSONValue (const std::string &str);
+  JSONValue (const std::string &str, int line);
 
   ///
   /// \brief Add new entry to the array
@@ -218,13 +219,14 @@ public:
   virtual size_t object_key_size (const std::string &key) const;
 
   JSONValue *parent () const;
+  int line () const;
 
   std::ostream &print (std::ostream &stream, int tab) const;
   std::ostream &print_ancestor (std::ostream &stream) const;
 
 public:
-  static JSONValue *make_object ();
-  static JSONValue *make_array ();
+  static JSONValue *make_object (int line);
+  static JSONValue *make_array (int line);
   friend std::ostream &operator<< (std::ostream &stream, const JSONValue &val);
 };
 

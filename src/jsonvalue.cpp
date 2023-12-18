@@ -22,38 +22,42 @@ JSONValue::set_parent (JSONValue *parent)
 
 /* ************************** JSONValue::JSONValue ************************* */
 
-JSONValue::JSONValue ()
+JSONValue::JSONValue (int line)
 {
   m_parent = nullptr;
   m_data_ptr = nullptr;
   m_value_type = JSONValueType::Null;
+  m_line = line;
 }
 
 /* ************************** JSONValue::JSONValue ************************* */
 
-JSONValue::JSONValue (float f)
+JSONValue::JSONValue (float f, int line)
 {
   m_parent = nullptr;
   m_data_ptr = new float (f);
   m_value_type = JSONValueType::Number;
+  m_line = line;
 }
 
 /* ************************** JSONValue::JSONValue ************************* */
 
-JSONValue::JSONValue (bool b)
+JSONValue::JSONValue (bool b, int line)
 {
   m_parent = nullptr;
   m_data_ptr = new bool (b);
   m_value_type = JSONValueType::Boolean;
+  m_line = line;
 }
 
 /* ************************** JSONValue::JSONValue ************************* */
 
-JSONValue::JSONValue (const std::string &str)
+JSONValue::JSONValue (const std::string &str, int line)
 {
   m_parent = nullptr;
   m_data_ptr = new std::string (str);
   m_value_type = JSONValueType::String;
+  m_line = line;
 }
 
 /* ************************* JSONValue::~JSONValue ************************* */
@@ -216,6 +220,14 @@ JSONValue::as_array (int index) const
     return reinterpret_cast<value_array_t *> (m_data_ptr)->at (index);
 }
 
+/* **************************** JSONValue::line **************************** */
+
+int
+JSONValue::line () const
+{
+  return m_line;
+}
+
 /* *********************** JSONValue::object_key_size ********************** */
 
 size_t
@@ -358,9 +370,9 @@ JSONValue::print (std::ostream &stream, int tab) const
 /* ****************************** make_object ****************************** */
 
 JSONValue *
-JSONValue::make_object ()
+JSONValue::make_object (int line)
 {
-  JSONValue *val = new JSONValue ();
+  JSONValue *val = new JSONValue (line);
   if (val == nullptr)
     return nullptr;
   val->m_data_ptr = new value_object_t ();
@@ -372,9 +384,9 @@ JSONValue::make_object ()
 /* ******************************* make_array ****************************** */
 
 JSONValue *
-JSONValue::make_array ()
+JSONValue::make_array (int line)
 {
-  JSONValue *val = new JSONValue ();
+  JSONValue *val = new JSONValue (line);
   if (val == nullptr)
     return nullptr;
   val->m_data_ptr = new value_array_t ();
