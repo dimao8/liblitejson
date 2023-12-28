@@ -21,8 +21,8 @@ namespace litejson
 enum class TokenType
 {
   Null,     /// \c null keyword
-  True,     /// \c true keyword
-  False,    /// \c false keyword
+  TTrue,     /// \c true keyword
+  FFalse,    /// \c false keyword
   String,   /// string
   Number,   /// number
   Lbrace,   /// left brace {

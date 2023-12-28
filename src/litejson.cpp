@@ -238,12 +238,12 @@ JSONLoader::parse_string (std::string &str, int n)
             }
           else if (s == "true")
             {
-              m_tokens.emplace_back (TokenType::True, s, n);
+              m_tokens.emplace_back (TokenType::TTrue, s, n);
               continue;
             }
           else if (s == "false")
             {
-              m_tokens.emplace_back (TokenType::False, s, n);
+              m_tokens.emplace_back (TokenType::FFalse, s, n);
               continue;
             }
           else
@@ -412,12 +412,12 @@ JSONLoader::get_value (std::list<Token>::const_iterator &it)
       it++;
       return val;
 
-    case TokenType::True:
+    case TokenType::TTrue:
       val = new JSONValue (true, it->line);
       it++;
       return val;
 
-    case TokenType::False:
+    case TokenType::FFalse:
       val = new JSONValue (false, it->line);
       it++;
       return val;
