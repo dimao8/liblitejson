@@ -1,0 +1,17 @@
+{
+  "entry": [
+    null,
+    true,
+    false,
+    1.25E-5,
+    "Hello",
+    {
+      "key": "value"
+    },
+    [
+      1,
+      2,
+      3
+    ]
+  ]
+}

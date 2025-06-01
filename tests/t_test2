@@ -1,3 +1,0 @@
-#! /bin/sh
-
-./tests/test1 ${srcdir}/tests/error.json

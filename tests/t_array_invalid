@@ -1,0 +1,12 @@
+#! /bin/sh
+
+./tests/validate tests/array_invalid1.json
+result1=$?
+./tests/validate tests/array_invalid2.json
+result2=$?
+
+if [[ "$result1" = "0" || "$result2" = "0" ]]; then
+  exit 0
+else
+  exit 255
+fi

@@ -1,0 +1,17 @@
+{
+  "entry": {
+    "null": null,
+    "true": true,
+    "false": false,
+    "number": 1.2,
+    "string": "text",
+    "array": [
+      1,
+      2,
+      3
+    ],
+    "object": {
+      "string": "text"
+    }
+  }
+}

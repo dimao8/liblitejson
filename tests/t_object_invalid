@@ -1,0 +1,17 @@
+#! /bin/sh
+
+./tests/validate tests/object_invalid1.json
+result1=$?
+./tests/validate tests/object_invalid2.json
+result2=$?
+./tests/validate tests/object_invalid3.json
+result3=$?
+./tests/validate tests/object_invalid4.json
+result4=$?
+
+if [[ "$result1" = "0" || "$result2" = "0"
+  || "$result3" = "0" || "$result4" = "0" ]]; then
+  exit 0
+else
+  exit 255
+fi
