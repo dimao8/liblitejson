@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.10)
 
 project(
   liblitejson
-  VERSION 0.2.0.4
+  VERSION 0.2.0.5
   DESCRIPTION "Lite JSON loader"
   HOMEPAGE_URL "https://gitverse.ru/DimaO87/liblitejson"
   LANGUAGES CXX
@@ -47,7 +47,13 @@ target_compile_definitions(
 #   PUBLIC_HEADER ${HEADERS}
 # )
 
-add_subdirectory(tests)
+# Testing
+option(DISABLE_TESTING "Disable test routine" OFF)
+if(NOT DISABLE_TESTING)
+  add_subdirectory(tests)
+else()
+  message(NOTICE "Testing is disabled. ``check'' is unavailable")
+endif()
 
 # Config file
 set(PACKAGE ${PROJECT_NAME})
