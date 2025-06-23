@@ -1,7 +1,7 @@
 enable_testing()
 
-set(TESTS_SRC_DIR ${CMAKE_SOURCE_DIR}/tests)
-set(TESTS_BIN_DIR ${CMAKE_BINARY_DIR}/tests)
+set(TESTS_SRC_DIR ${CMAKE_CURRENT_SOURCE_DIR})
+set(TESTS_BIN_DIR ${CMAKE_CURRENT_BINARY_DIR})
 
 # validate
 add_executable(

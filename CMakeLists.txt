@@ -35,8 +35,8 @@ add_library(
 )
 target_include_directories(
   litejson PRIVATE
-  ${CMAKE_SOURCE_DIR}/include
-  ${CMAKE_BINARY_DIR}
+  ${CMAKE_CURRENT_SOURCE_DIR}/include
+  ${CMAKE_CURRENT_BINARY_DIR}
 )
 target_compile_definitions(
   litejson PRIVATE
