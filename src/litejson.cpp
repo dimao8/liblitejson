@@ -2,7 +2,7 @@
  * \file litejson.cpp
  */
 
-#include <litejson.h>
+#include <litejson/litejson.h>
 
 #include <iomanip>
 #include <iostream>

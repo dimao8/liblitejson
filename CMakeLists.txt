@@ -1,12 +1,15 @@
-cmake_minimum_required(VERSION 3.10)
+cmake_minimum_required(VERSION 3.18)
 
 project(
-  liblitejson
-  VERSION 0.2.0.5
+  litejson
+  VERSION 0.2.0.6
   DESCRIPTION "Lite JSON loader"
   HOMEPAGE_URL "https://gitverse.ru/DimaO87/liblitejson"
   LANGUAGES CXX
 )
+
+include(CMakePackageConfigHelpers)
+include(GNUInstallDirs)
 
 # Compile options
 set(CMAKE_CXX_STANDARD 17)
@@ -16,44 +19,65 @@ endif()
 
 # Sources and headers
 set(SOURCES
-  src/litejson.cpp
-	src/jsonvalue.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/src/litejson.cpp
+	${CMAKE_CURRENT_SOURCE_DIR}/src/jsonvalue.cpp
 )
 
 set(HEADERS
-  include/litejson.h
-	include/jsonvalue.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/include/litejson/litejson.h
+	${CMAKE_CURRENT_SOURCE_DIR}/include/litejson/jsonvalue.h
 )
 
 # Library
 option(BUILD_SHARED_LIBS "Build using shared libraries" ON)
 
 add_library(
-  litejson
+  litejson SHARED
   ${SOURCES}
-  ${HEADERS}
 )
 target_include_directories(
-  litejson PRIVATE
-  ${CMAKE_CURRENT_SOURCE_DIR}/include
-  ${CMAKE_CURRENT_BINARY_DIR}
+  litejson PUBLIC
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+  $<BUILD_INTERFACE:${CMAKE_BINARY_DIR}>
+  $<INSTALL_INTERFACE:include/litejson>
 )
-target_compile_definitions(
-  litejson PRIVATE
-  "-DHAVE_CONFIG_H"
+set_target_properties(litejson PROPERTIES
+  PUBLIC_HEADER "${HEADERS}"
 )
-# set_target_properties(
-#   litejson PROPERTIES
-#   PUBLIC_HEADER ${HEADERS}
-# )
 
-# Testing
-option(DISABLE_TESTING "Disable test routine" OFF)
-if(NOT DISABLE_TESTING)
-  add_subdirectory(tests)
-else()
-  message(NOTICE "Testing is disabled. ``check'' is unavailable")
-endif()
+# Configuration
+set(INCLUDE_INSTALL_DIR include/ CACHE PATH "Headers install directory")
+set(LIB_INSTALL_DIR lib/ CACHE PATH "Libraries install directory")
+set(SYSCONFIG_INSTALL_DIR etc/litejson/ CACHE PATH "System Configuration install directory")
+configure_package_config_file(
+  ${CMAKE_CURRENT_SOURCE_DIR}/cmake/litejsonConfig.cmake.in
+  ${CMAKE_CURRENT_BINARY_DIR}/litejsonConfig.cmake
+  INSTALL_DESTINATION ${LIB_INSTALL_DIR}/litejson/cmake
+  PATH_VARS INCLUDE_INSTALL_DIR SYSCONFIG_INSTALL_DIR
+)
+
+write_basic_package_version_file(
+  ${CMAKE_CURRENT_BINARY_DIR}/litejsonConfigVersion.cmake
+  VERSION 0.2.0
+  COMPATIBILITY SameMajorVersion
+)
+
+# Install
+install(
+  TARGETS litejson
+  EXPORT litejson-targets
+  PUBLIC_HEADER DESTINATION include/litejson
+)
+
+install(
+  FILES
+  ${CMAKE_CURRENT_BINARY_DIR}/litejsonConfig.cmake
+  ${CMAKE_CURRENT_BINARY_DIR}/litejsonConfigVersion.cmake
+  DESTINATION ${LIB_INSTALL_DIR}/cmake/litejson
+)
+
+# Tests
+add_subdirectory(tests)
 
 # Config file
 set(PACKAGE ${PROJECT_NAME})
@@ -63,12 +87,7 @@ configure_file(
   ${CMAKE_BINARY_DIR}/config.h
   @ONLY
 )
-
-# Copy compile_commands.json
-file(
-  CREATE_LINK
-  ${CMAKE_BINARY_DIR}/compile_commands.json
-  ${CMAKE_SOURCE_DIR}/compile_commands.json
-  COPY_ON_ERROR
-  SYMBOLIC
+target_compile_definitions(
+  litejson PRIVATE
+  "-DHAVE_CONFIG_H"
 )

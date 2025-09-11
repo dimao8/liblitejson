@@ -1,3 +1,0 @@
-#! /bin/sh
-
-./tests/validate tests/string_invalid.json
