@@ -1,0 +1,155 @@
+\input texinfo
+@c -*-texinfo-*-
+@c %**start of header
+@setfilename litejson.info
+@settitle liteJSON manual v0.2.
+@c %**end of header
+
+@copying
+This manual is for liteJSON, v0.2.
+
+Copyright @copyright{} 2025 Khruschev Dmitry aka DimaO.
+@end copying
+
+@titlepage
+@title liteJSON
+@subtitle Programmer manual
+@subtitle Revision 1.0
+@author Khruschev Dmitry aka DimaO
+
+@c The following two commands
+@c start the copyright page.
+@page
+@vskip 0pt plus 1filll
+@insertcopying
+
+Published by Khruschev Dmitry aka DimaO
+@end titlepage
+
+@c TOC
+@contents
+
+@ifnottex
+@node Top
+@top Common description
+
+This manual is for liteJSON, v0.2.
+@end ifnottex
+
+@menu
+* Common description::Description of the liteJSON library
+* Types index::Types index
+* Function index::Function index
+@end menu
+
+@node Common description
+@chapter Description of the liteJSON library
+There are two modules to work with: liteJSON and @code{JSONValue}.
+liteJSON is a main parser and JSON tree container. @code{JSONValue} is a cover
+for JSON tree basic entry.
+
+@menu
+* liteJSON module::liteJSON module
+* JSONValue module::JSONValue module
+* liteJSON API::liteJSON API
+@end menu
+
+@node liteJSON module
+@section liteJSON module
+liteJSON contains @code{JSONLoader} class which is main parser class and JSON
+tree container. It allows to load JSON file, check it for JSON standard
+consistency and then build a JSON tree. Programmer can walk through the tree by
+getting root JSON value and check for it's children.
+
+@node JSONValue module
+@section JSONValue module
+The @code{JSONValue} is used to hold JSON tree or it's subtrees. JSONValue
+can be one of six basic data types: @b{null}, @b{string}, @b{number},
+@b{boolean}, @b{array} and @b{object}. All this types has different lexical
+look and separated by @code{JSONLoader} class at lexical analysis.
+
+The @code{JSONValue} can be checked for it's type. It is assumed that the user
+knows the data field type in advance. So when user try to read value of
+@code{JSONValue} object, he or she use one of convert functions to extract
+raw value of the JSON node. But there is the protection mechanism. For example
+if user is trying to get number from string node, there will an error be
+thrown. Always check node type if there is some concern about it's real type.
+
+@node liteJSON API
+@chapter liteJSON API
+
+@menu
+* JSONLoader class::JSONLoader class
+* JSONValue class::JSONValue class
+@end menu
+
+@node JSONLoader class
+@section JSONLoader class
+@deftp {Class} JSONLoader
+main JSON parser.
+@end deftp
+
+@defmethod JSONLoader JSONLoader ()
+  This method constructs the new parser without JSON tree. It is used for
+  generate user defined JSON tree to save it to the file.
+@end defmethod
+
+@defmethod JSONLoader JSONLoader (const std::string& @code{file_name})
+  This method constructs the new parser and load it's content from file named
+  @var{file_name}. It is try to parse JSON file and build a JSON tree. If
+  parsing was fail, the JSON tree will remains empty. There is a @var{bad} flag
+  that indicates of some problems with the parsing. The error will be printed
+  to @code{stdout}.
+@end defmethod
+
+@deftypemethod JSONLoader bool is_bad ()
+  This method return the value of the @var{bad} flag. Note, that the @var{bad}
+  flag set only during parsing process. So if empty JSON tree is generated,
+  the @code{is_bad} return @code{false}.
+@end deftypemethod
+
+@deftypemethod JSONLoader void clear_tree ()
+  This method allows to clear previously created or loaded JSON tree.
+@end deftypemethod
+
+@deftypemethod JSONLoader JSONValue* get_root () const
+  This method returns root of the JSON tree. It is used to walk through tree,
+  search and extract data.
+@end deftypemethod
+
+@node JSONValue class
+@section JSONValue class
+@deftp {Data Type} JSONValueType
+  This is the JSON value type enumerator. It defines one of the six JSON
+  node types.
+
+  @float table,table:JSONValueType
+    @multitable @columnfractions 0.5 0.5
+      @headitem Name @tab Description
+      @item @code{Invalid} @tab Reserved for errors
+      @item @code{Null} @tab Empty entry with keyword @code{null}
+      @item @code{Boolean} @tab Boolean value, that can be @code{true} or
+            @code{false}
+      @item @code{Number} @tab Any numeric value
+      @item @code{String} @tab Text value with quoting
+      @item @code{Array} @tab Array value in square brackets, where items
+            separated by commas
+      @item @code{Object} @tab Set of pairs @samp{name:value} in curved braces
+            separated by commas
+    @end multitable
+  @end float
+@end deftp
+
+@deftp {Class} JSONValue
+JSON tree node abstract class.
+@end deftp
+
+@node Types index
+@unnumbered Types index
+@printindex tp
+
+@node Function index
+@unnumbered Function index
+@printindex fn
+
+@bye

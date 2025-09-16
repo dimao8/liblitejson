@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.18)
 
 project(
   litejson
-  VERSION 0.2.0.6
+  VERSION 0.2.1.0
   DESCRIPTION "Lite JSON loader"
   HOMEPAGE_URL "https://gitverse.ru/DimaO87/liblitejson"
   LANGUAGES CXX
@@ -19,13 +19,26 @@ endif()
 
 # Sources and headers
 set(SOURCES
-  ${CMAKE_CURRENT_SOURCE_DIR}/src/litejson.cpp
-	${CMAKE_CURRENT_SOURCE_DIR}/src/jsonvalue.cpp
+  src/litejson.cpp
+	src/jsonvalue.cpp
+  src/jsonarrayvalue.cpp
+  src/jsonbooleanvalue.cpp
+  src/jsonnumbervalue.cpp
+  src/jsonobjectvalue.cpp
+  src/jsonstringvalue.cpp
+)
+
+set(INTERFACE_HEADERS
+  include/litejson/litejson.h
+	include/litejson/jsonvalue.h
 )
 
 set(HEADERS
-  ${CMAKE_CURRENT_SOURCE_DIR}/include/litejson/litejson.h
-	${CMAKE_CURRENT_SOURCE_DIR}/include/litejson/jsonvalue.h
+  src/jsonarrayvalue.cpp
+  src/jsonbooleanvalue.cpp
+  src/jsonnumbervalue.cpp
+  src/jsonobjectvalue.cpp
+  src/jsonstringvalue.cpp
 )
 
 # Library
@@ -42,7 +55,7 @@ target_include_directories(
   $<INSTALL_INTERFACE:include/litejson>
 )
 set_target_properties(litejson PROPERTIES
-  PUBLIC_HEADER "${HEADERS}"
+  PUBLIC_HEADER "${INTERFACE_HEADERS}"
 )
 
 # Configuration
@@ -91,3 +104,19 @@ target_compile_definitions(
   litejson PRIVATE
   "-DHAVE_CONFIG_H"
 )
+
+# Documentation
+find_program(
+  MAKEINFO
+  makeinfo
+)
+
+if(MAKEINFO)
+  add_subdirectory(doc)
+  install(
+    FILES ${CMAKE_BINARY_DIR}/doc/litejson.pdf
+    TYPE DOC
+  )
+else()
+  message(WARNING "makeinfo not found. Skip document building.")
+endif()

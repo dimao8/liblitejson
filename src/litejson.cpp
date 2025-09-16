@@ -4,12 +4,27 @@
 
 #include <litejson/litejson.h>
 
-#include <iomanip>
+#include <fstream>
 #include <iostream>
 #include <locale>
 
 namespace litejson
 {
+
+enum class TokenType
+{
+  Null,     /// \c null keyword
+  TTrue,    /// \c true keyword
+  FFalse,   /// \c false keyword
+  String,   /// string
+  Number,   /// number
+  Lbrace,   /// left brace {
+  Rbrace,   /// right brace }
+  Lbracket, /// left bracket [
+  Rbracket, /// right bracket ]
+  Comma,    /// comma ,
+  Colon     /// colon :
+};
 
 /* ************************* JSONLoader::JSONLoader ************************ */
 
@@ -112,7 +127,7 @@ JSONLoader::utf32toutf8s (int c)
 
 /* ************************** JSONValue::get_root ************************** */
 
-JSONValue *
+const std::shared_ptr<JSONValue> &
 JSONLoader::get_root () const
 {
   return m_root;
@@ -388,16 +403,16 @@ JSONLoader::syntax (int &n)
 
   m_root = get_value (it);
 
-  return (m_root == nullptr) ? false : m_root->is_valid ();
+  return (m_root != nullptr);
 }
 
 /* ************************* JSONLoader::get_value ************************* */
 
-JSONValue *
+const std::shared_ptr<JSONValue>
 JSONLoader::get_value (std::list<Token>::const_iterator &it)
 {
-  JSONValue *val;
-  JSONValue *child;
+  std::shared_ptr<JSONValue> val;
+  std::shared_ptr<JSONValue> child;
   std::string name;
   std::list<Token>::const_iterator prev_it;
 
@@ -408,28 +423,27 @@ JSONLoader::get_value (std::list<Token>::const_iterator &it)
     {
 
     case TokenType::Null:
-      val = new JSONValue (it->line);
+      val = JSONValue::make_null (it->line);
       it++;
       return val;
 
     case TokenType::TTrue:
-      val = new JSONValue (true, it->line);
+      val = JSONValue::make_boolean (it->line, true);
       it++;
       return val;
 
     case TokenType::FFalse:
-      val = new JSONValue (false, it->line);
+      val = JSONValue::make_boolean (it->line, false);
       it++;
       return val;
 
     case TokenType::String:
-      val = new JSONValue (it->text, it->line);
+      val = JSONValue::make_string (it->line, it->text);
       it++;
       return val;
 
     case TokenType::Number:
-      val = new JSONValue (static_cast<float> (std::atof (it->text.c_str ())),
-                           it->line);
+      val = JSONValue::make_number (it->line, std::atof (it->text.c_str ()));
       it++;
       return val;
 
@@ -447,7 +461,7 @@ JSONLoader::get_value (std::list<Token>::const_iterator &it)
                   std::cout << "[E] Syntax error (" << it->line
                             << "): ``:\'\' expected at token ``" << it->text
                             << "\'\'" << std::endl;
-                  delete val;
+                  val.reset ();
                   return nullptr;
                 }
               it++; // Skip colon
@@ -456,7 +470,7 @@ JSONLoader::get_value (std::list<Token>::const_iterator &it)
                 val->add_object_entry (name, child);
               else
                 {
-                  delete val;
+                  val.reset ();
                   return nullptr;
                 }
               if (it->type == TokenType::Comma) // Skip comma
@@ -471,7 +485,7 @@ JSONLoader::get_value (std::list<Token>::const_iterator &it)
                       prev_it--;
                       std::cout << "[E] Syntax error (" << prev_it->line
                                 << "): unexpected end of file" << std::endl;
-                      delete val;
+                      val.reset ();
                       return nullptr;
                     }
                   else
@@ -479,7 +493,7 @@ JSONLoader::get_value (std::list<Token>::const_iterator &it)
                       std::cout << "[E] Syntax error (" << it->line
                                 << "): ``}\'\' or ``,\'\' expected at token ``"
                                 << it->text << "\'\'" << std::endl;
-                      delete val;
+                      val.reset ();
                       return nullptr;
                     }
                 }
@@ -497,7 +511,7 @@ JSONLoader::get_value (std::list<Token>::const_iterator &it)
                   prev_it--;
                   std::cout << "[E] Syntax error (" << prev_it->line
                             << "): unexpected end of file" << std::endl;
-                  delete val;
+                  val.reset ();
                   return nullptr;
                 }
               else
@@ -505,7 +519,7 @@ JSONLoader::get_value (std::list<Token>::const_iterator &it)
                   std::cout << "[E] Syntax error (" << it->line
                             << "): string or ``}\'\' expected at token ``"
                             << it->text << "\'\'" << std::endl;
-                  delete val;
+                  val.reset ();
                   return nullptr;
                 }
             }
@@ -525,11 +539,11 @@ JSONLoader::get_value (std::list<Token>::const_iterator &it)
           else
             {
               child = get_value (it);
-              if (child->is_valid ())
+              if (child != nullptr)
                 val->add_array_entry (child);
               else
                 {
-                  delete val;
+                  val.reset ();
                   return nullptr;
                 }
 
@@ -542,7 +556,7 @@ JSONLoader::get_value (std::list<Token>::const_iterator &it)
                   std::cout << "[E] Syntax error (" << it->line
                             << "): ``]\'\' or ``,\'\' expected at token ``"
                             << it->text << "\'\'" << std::endl;
-                  delete val;
+                  val.reset ();
                   return nullptr;
                 }
             }
@@ -559,6 +573,14 @@ JSONLoader::get_value (std::list<Token>::const_iterator &it)
     }
 }
 
+/* *********************** JSONLoader::set_root_value ********************** */
+
+void
+JSONLoader::set_root_value (const std::shared_ptr<JSONValue> &val)
+{
+  m_root = val;
+}
+
 /* *************************** JSONLoader::is_bad ************************** */
 
 bool
@@ -572,8 +594,20 @@ JSONLoader::is_bad ()
 void
 JSONLoader::clear_tree ()
 {
-  delete m_root;
-  m_root = nullptr;
+  m_root.reset ();
+}
+
+/* ************************ JSONLoader::export_file ************************ */
+
+bool
+JSONLoader::export_file (const std::string &file_name)
+{
+  std::ofstream ofs (file_name);
+  if (!ofs)
+    return false;
+
+  m_root->print (ofs, 0);
+  return true;
 }
 
 /* ******************************* operator<< ****************************** */
@@ -581,8 +615,8 @@ JSONLoader::clear_tree ()
 std::ostream &
 operator<< (std::ostream &stream, const JSONLoader &loader)
 {
-  stream << *(loader.m_root);
+  stream << *(loader.get_root ());
   return stream;
 }
 
-}
+} // namespace litejson

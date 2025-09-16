@@ -7,6 +7,7 @@
 
 #include <fstream>
 #include <list>
+#include <memory>
 #include <ostream>
 #include <string>
 
@@ -18,20 +19,7 @@ namespace litejson
 ///
 /// \brief Token type enumerator
 ///
-enum class TokenType
-{
-  Null,     /// \c null keyword
-  TTrue,     /// \c true keyword
-  FFalse,    /// \c false keyword
-  String,   /// string
-  Number,   /// number
-  Lbrace,   /// left brace {
-  Rbrace,   /// right brace }
-  Lbracket, /// left bracket [
-  Rbracket, /// right bracket ]
-  Comma,    /// comma ,
-  Colon     /// colon :
-};
+enum class TokenType;
 
 ///
 /// \brief Token structure
@@ -70,9 +58,9 @@ class JSONLoader
 {
 
 private:
-  JSONValue *m_root;          /// Root element of the JSON tree
-  bool m_badbit;             /// Bad flag for JSON parser
-  std::list<Token> m_tokens; /// Token list
+  std::shared_ptr<JSONValue> m_root; /// Root element of the JSON tree
+  bool m_badbit;                     /// Bad flag for JSON parser
+  std::list<Token> m_tokens;         /// Token list
 
   ///
   /// \brief Convert 4-digit hex to utf32 value
@@ -87,7 +75,7 @@ private:
   /// \param [in] c -- Input UTF32 character
   /// \return Return UTF8 sequence equivalent
   ///
-  const std::string utf32toutf8s(int c);
+  const std::string utf32toutf8s (int c);
 
   ///
   /// Make lexical analysis
@@ -121,7 +109,8 @@ private:
   /// \param [in, out]
   /// \return Extracted node or nullptr
   ///
-  JSONValue *get_value (std::list<Token>::const_iterator &it);
+  const std::shared_ptr<JSONValue>
+  get_value (std::list<Token>::const_iterator &it);
 
 public:
   ///
@@ -150,7 +139,11 @@ public:
   ///
   /// \brief Get root JSONValue
   ///
-  JSONValue *get_root () const;
+  const std::shared_ptr<JSONValue> &get_root () const;
+
+  void set_root_value (const std::shared_ptr<JSONValue> &val);
+
+  bool export_file (const std::string& file_name);
 
   ///
   /// \brief Write JSON tree to the output stream.
@@ -165,6 +158,8 @@ public:
                                    const JSONLoader &loader);
 };
 
-}
+std::ostream &operator<< (std::ostream &stream, const JSONLoader &loader);
+
+} // namespace litejson
 
 #endif // LITEJSON_H

@@ -14,6 +14,17 @@ target_link_libraries(
   $<TARGET_FILE:litejson>
 )
 
+# make_json
+add_executable(
+  make_json
+  ${TESTS_SRC_DIR}/make_json.cpp
+)
+target_include_directories(make_json PRIVATE ${CMAKE_SOURCE_DIR}/include)
+target_link_libraries(
+  make_json PRIVATE
+  $<TARGET_FILE:litejson>
+)
+
 # t_array test
 add_test(
   NAME t_array
@@ -199,8 +210,15 @@ set_property(
   PROPERTY WILL_FAIL True
 )
 
+# t_export test
+add_test(
+  NAME t_export
+  COMMAND $<TARGET_FILE:make_json>
+  WORKING_DIRECTORY ${TESTS_BIN_DIR}
+)
+
 add_custom_target(
   check
   COMMAND ${CMAKE_CTEST_COMMAND}
-  DEPENDS validate
+  DEPENDS make_json validate
 )
