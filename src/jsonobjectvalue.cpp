@@ -99,6 +99,29 @@ JSONObjectValue::object_key_size (const std::string &key) const
   return m_value.count (key);
 }
 
+/* ********************* JSONObjectValue::remove_entry ********************* */
+
+bool
+JSONObjectValue::remove_entry (const std::string &key, size_t index)
+{
+  std::pair<ObjectValue::const_iterator, ObjectValue::const_iterator> range;
+  ObjectValue::const_iterator it;
+
+  if (index >= object_key_size (key))
+    return false;
+  else
+    {
+      range = m_value.equal_range (key);
+      it = range.first;
+      if (index)
+        for (auto i = 0; i < index; i++, it++)
+          {
+          }
+      m_value.erase (it);
+      return true;
+    }
+}
+
 /* ************************* JSONObjectValue::print ************************ */
 
 void

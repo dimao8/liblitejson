@@ -193,6 +193,29 @@ public:
   ///
   virtual size_t object_key_size (const std::string &key) const;
 
+  ///
+  /// \brief Remove array entry and all it's subtree
+  /// \param [in] index -- Index of the entry to be removed
+  /// \return Returns result of deletion
+  ///
+  /// Remove array entry if JSONValue is an array.
+  /// \warning Entry will be removed with all it's subtree. Try not delete the
+  /// whole JSON tree
+  ///
+  virtual bool remove_entry (size_t index);
+
+  ///
+  /// \brief Remove object entry and all it's subtree
+  /// \param [in] key -- Key of the entry to be removed
+  /// \param [in] index -- Index of the entry to be removed. Can be 0
+  /// \return Returns result of deletion
+  ///
+  /// Remove object entry if JSONValue is an object.
+  /// \warning Entry will be removed with all it's subtree. Try not delete the
+  /// whole JSON tree
+  ///
+  virtual bool remove_entry (const std::string& key, size_t index = 0);
+
   const std::weak_ptr<JSONValue> &parent () const;
   int line () const;
 

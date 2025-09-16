@@ -53,7 +53,16 @@ JSONArrayValue::as_array (size_t index) const
   if (index >= m_value.size ())
     return nullptr;
   else
-    return m_value[index];
+    {
+      size_t i = 0;
+      for (auto it = m_value.begin (); it != m_value.end (); it++, i++)
+        {
+          if (i == index)
+            return *it;
+        }
+    }
+
+  return nullptr;
 }
 
 /* ************************ JSONArrayValue::as_array *********************** */
@@ -64,7 +73,16 @@ JSONArrayValue::as_array (size_t index)
   if (index >= m_value.size ())
     return nullptr;
   else
-    return m_value[index];
+    {
+      size_t i = 0;
+      for (auto it = m_value.begin (); it != m_value.end (); it++, i++)
+        {
+          if (i == index)
+            return *it;
+        }
+    }
+
+  return nullptr;
 }
 
 /* *********************** JSONArrayValue::array_size ********************** */
@@ -73,6 +91,29 @@ size_t
 JSONArrayValue::array_size () const
 {
   return m_value.size ();
+}
+
+/* ********************** JSONArrayValue::remove_entry ********************* */
+
+bool
+JSONArrayValue::remove_entry (size_t index)
+{
+  if (index >= m_value.size ())
+    return false;
+  else
+    {
+      size_t i = 0;
+      for (auto it = m_value.begin (); it != m_value.end (); it++, i++)
+        {
+          if (i == index)
+            {
+              m_value.erase (it);
+              return true;
+            }
+        }
+    }
+
+  return false;
 }
 
 /* ************************* JSONArrayValue::print ************************* */
@@ -86,10 +127,11 @@ JSONArrayValue::print (std::ostream &stream, size_t indent) const
   auto sz = array_size ();
   if (sz > 0)
     {
-      for (auto i = 0; i < sz; i++)
+      size_t i = 0;
+      for (auto it = m_value.begin (); it != m_value.end (); it++, i++)
         {
           stream << filler;
-          as_array (i)->print (stream, indent + 2);
+          (*it)->print (stream, indent + 2);
           if (i != sz - 1)
             stream << ",";
           stream << std::endl;

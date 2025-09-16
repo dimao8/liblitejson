@@ -193,6 +193,22 @@ JSONValue::array_size () const
   return 0;
 }
 
+/* ************************ JSONValue::remove_entry ************************ */
+
+bool
+JSONValue::remove_entry (size_t index)
+{
+  return false;
+}
+
+/* ************************ JSONValue::remove_entry ************************ */
+
+bool
+JSONValue::remove_entry (const std::string& key, size_t index)
+{
+  return false;
+}
+
 /* *************************** JSONValue::parent *************************** */
 
 const std::weak_ptr<JSONValue> &

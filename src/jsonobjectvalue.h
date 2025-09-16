@@ -74,6 +74,19 @@ public:
   ///
   virtual size_t object_key_size (const std::string &key) const override final;
 
+  ///
+  /// \brief Remove object entry and all it's subtree
+  /// \param [in] key -- Key of the entry to be removed
+  /// \param [in] index -- Index of the entry to be removed. Can be 0
+  /// \return Returns result of deletion
+  ///
+  /// Remove object entry if JSONValue is an object.
+  /// \warning Entry will be removed with all it's subtree. Try not delete the
+  /// whole JSON tree
+  ///
+  virtual bool remove_entry (const std::string &key,
+                             size_t index = 0) override final;
+
   virtual void print (std::ostream &stream,
                       size_t indent) const override final;
 };

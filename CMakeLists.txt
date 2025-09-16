@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.18)
 
 project(
   litejson
-  VERSION 0.2.1.0
+  VERSION 0.2.1.1
   DESCRIPTION "Lite JSON loader"
   HOMEPAGE_URL "https://gitverse.ru/DimaO87/liblitejson"
   LANGUAGES CXX

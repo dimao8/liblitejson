@@ -4,7 +4,7 @@
 #include <litejson/jsonvalue.h>
 
 #include <memory>
-#include <vector>
+#include <list>
 
 namespace litejson
 {
@@ -12,7 +12,7 @@ namespace litejson
 class JSONArrayValue : public JSONValue
 {
 private:
-  std::vector<std::shared_ptr<JSONValue> > m_value;
+  std::list<std::shared_ptr<JSONValue> > m_value;
 
 public:
   JSONArrayValue () = delete;
@@ -57,6 +57,17 @@ public:
   /// Try to extract JSONValue from array by index.
   ///
   std::shared_ptr<JSONValue> as_array (size_t index) override final;
+
+  ///
+  /// \brief Remove array entry and all it's subtree
+  /// \param [in] index -- Index of the entry to be removed
+  /// \return Returns result of deletion
+  ///
+  /// Remove array entry if JSONValue is an array.
+  /// \warning Entry will be removed with all it's subtree. Try not delete the
+  /// whole JSON tree
+  ///
+  virtual bool remove_entry (size_t index) override final;
 
   ///
   /// \brief Return size of the array

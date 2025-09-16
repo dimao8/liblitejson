@@ -74,14 +74,30 @@ main (int argc, char **argv)
   current->add_array_entry (litejson::JSONValue::make_number (0, 2));
   current->add_array_entry (litejson::JSONValue::make_boolean (0, false));
   current = current->parent ().lock ();
-  if (current == nullptr)
+  if (!current)
     return -1;
 
   current->add_object_entry ("Object", litejson::JSONValue::make_object (0));
   current = current->as_object ("Object");
+  if (!current)
+    return -1;
   current->add_object_entry (
       "String", litejson::JSONValue::make_string (0, "Object.String"));
   current->add_object_entry ("Number",
                              litejson::JSONValue::make_number (0, 122));
+  current = current->parent ().lock ();
+  if (!current)
+    return -1;
+  current->add_object_entry ("Object2", litejson::JSONValue::make_object (0));
+  current = current->as_object ("Object2");
+  if (!current)
+    return -1;
+  current->add_object_entry (
+      "String", litejson::JSONValue::make_string (0, "Object2[0].String"));
+  current = current->parent ().lock ();
+  if (!current)
+    return -1;
+  current->remove_entry("Object2");
+
   return ldr.export_file ("export.json") ? 0 : -1;
 }
