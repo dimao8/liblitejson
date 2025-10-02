@@ -14,14 +14,14 @@ target_link_libraries(
   $<TARGET_FILE:litejson>
 )
 
-# make_json
+# export_compare
 add_executable(
-  make_json
-  ${TESTS_SRC_DIR}/make_json.cpp
+  export_compare
+  ${TESTS_SRC_DIR}/export_compare.cpp
 )
-target_include_directories(make_json PRIVATE ${CMAKE_SOURCE_DIR}/include)
+target_include_directories(export_compare PRIVATE ${CMAKE_SOURCE_DIR}/include)
 target_link_libraries(
-  make_json PRIVATE
+  export_compare PRIVATE
   $<TARGET_FILE:litejson>
 )
 
@@ -210,15 +210,15 @@ set_property(
   PROPERTY WILL_FAIL True
 )
 
-# t_export test
+# t_compare test
 add_test(
-  NAME t_export
-  COMMAND $<TARGET_FILE:make_json>
+  NAME t_compare
+  COMMAND $<TARGET_FILE:export_compare> --compare --output=result.json ${TESTS_SRC_DIR}/object.json
   WORKING_DIRECTORY ${TESTS_BIN_DIR}
 )
 
 add_custom_target(
   check
   COMMAND ${CMAKE_CTEST_COMMAND}
-  DEPENDS make_json validate
+  DEPENDS export_compare validate
 )

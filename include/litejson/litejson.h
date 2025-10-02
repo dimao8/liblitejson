@@ -143,6 +143,7 @@ public:
 
   void set_root_value (const std::shared_ptr<JSONValue> &val);
 
+  bool export_stream (std::ostream& stream);
   bool export_file (const std::string& file_name);
 
   ///

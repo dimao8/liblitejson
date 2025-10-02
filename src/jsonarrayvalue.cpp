@@ -88,7 +88,7 @@ JSONArrayValue::as_array (size_t index)
 /* *********************** JSONArrayValue::array_size ********************** */
 
 size_t
-JSONArrayValue::array_size () const
+JSONArrayValue::size () const
 {
   return m_value.size ();
 }
@@ -124,7 +124,7 @@ JSONArrayValue::print (std::ostream &stream, size_t indent) const
   std::string filler (indent + 2, ' ');
   stream << "[" << std::endl;
 
-  auto sz = array_size ();
+  auto sz = size ();
   if (sz > 0)
     {
       size_t i = 0;

@@ -18,10 +18,36 @@ private:
   ObjectValue m_value;
 
 public:
+  class JSONObjectValueIterator : public JSONValue::JSONValueIterator
+  {
+    using MMIterator = std::multimap<std::string, std::shared_ptr<JSONValue>>::const_iterator;
+
+  private:
+    MMIterator m_current_iterator;
+    MMIterator m_end_iterator;
+
+  public:
+    JSONObjectValueIterator (MMIterator start = {}, MMIterator end = {});
+    virtual ~JSONObjectValueIterator ();
+
+    virtual reference operator* () const override;
+    virtual pointer operator->() const override;
+    JSONObjectValueIterator &operator++ ();
+    JSONObjectValueIterator operator++ (int);
+    friend bool operator== (const JSONObjectValueIterator &op1,
+                            const JSONObjectValueIterator &op2);
+    friend bool operator!= (const JSONObjectValueIterator &op1,
+                            const JSONObjectValueIterator &op2);
+  };
+
+public:
   JSONObjectValue () = delete;
   explicit JSONObjectValue (int line);
 
   virtual ~JSONObjectValue ();
+
+  virtual JSONValueIterator begin () override;
+  virtual JSONValueIterator end () override;
 
   ///
   /// \brief Add entry to the object
@@ -63,6 +89,12 @@ public:
   ///
   virtual std::shared_ptr<JSONValue>
   as_object (const std::string &key, size_t index = 0) override final;
+
+  ///
+  /// \brief Return size of the object
+  /// \return Return size
+  ///
+  virtual size_t size () const override final;
 
   ///
   /// \brief Get number ov values with the same name

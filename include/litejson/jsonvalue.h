@@ -5,6 +5,8 @@
 #ifndef JSONVALUE_H
 #define JSONVALUE_H
 
+#include <cstddef>
+#include <iterator>
 #include <memory>
 #include <optional>
 #include <ostream>
@@ -46,6 +48,33 @@ private:
   void set_parent (const std::shared_ptr<JSONValue> &parent);
 
 public:
+  // Always empty iterator
+  class JSONValueIterator
+  {
+  public:
+    using iterator_category = std::forward_iterator_tag;
+    using difference_type = std::ptrdiff_t;
+    using value_type = std::shared_ptr<JSONValue>;
+    using pointer = const std::shared_ptr<JSONValue> *;
+    using reference = const std::shared_ptr<JSONValue> &;
+
+  private:
+    static value_type default_value;
+
+  public:
+    JSONValueIterator () = default;
+    virtual ~JSONValueIterator ();
+
+    virtual reference operator* () const;
+    virtual pointer operator->() const;
+    JSONValueIterator &operator++ ();
+    JSONValueIterator operator++ (int);
+    friend bool operator== (const JSONValueIterator &op1,
+                            const JSONValueIterator &op2);
+    friend bool operator!= (const JSONValueIterator &op1,
+                            const JSONValueIterator &op2);
+  };
+
   JSONValue () = delete;
 
   ///
@@ -57,6 +86,9 @@ public:
   /// \brief Destructor
   ///
   virtual ~JSONValue ();
+
+  virtual JSONValueIterator begin ();
+  virtual JSONValueIterator end ();
 
   ///
   /// \brief Add new entry to the array
@@ -158,10 +190,10 @@ public:
   virtual std::shared_ptr<JSONValue> as_array (size_t index);
 
   ///
-  /// \brief Return size of the array
+  /// \brief Return size of the array or object
   /// \return Return size
   ///
-  virtual size_t array_size () const;
+  virtual size_t size () const;
 
   ///
   /// \brief Return value from object
@@ -214,7 +246,7 @@ public:
   /// \warning Entry will be removed with all it's subtree. Try not delete the
   /// whole JSON tree
   ///
-  virtual bool remove_entry (const std::string& key, size_t index = 0);
+  virtual bool remove_entry (const std::string &key, size_t index = 0);
 
   const std::weak_ptr<JSONValue> &parent () const;
   int line () const;

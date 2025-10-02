@@ -73,7 +73,7 @@ public:
   /// \brief Return size of the array
   /// \return Return size
   ///
-  virtual size_t array_size () const override final;
+  virtual size_t size () const override final;
 
   virtual void print (std::ostream &stream,
                       size_t indent) const override final;

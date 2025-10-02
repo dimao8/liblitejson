@@ -597,6 +597,15 @@ JSONLoader::clear_tree ()
   m_root.reset ();
 }
 
+/* *********************** JSONLoader::export_stream *********************** */
+
+bool
+JSONLoader::export_stream (std::ostream &stream)
+{
+  m_root->print (stream, 0);
+  return true;
+}
+
 /* ************************ JSONLoader::export_file ************************ */
 
 bool
@@ -606,8 +615,7 @@ JSONLoader::export_file (const std::string &file_name)
   if (!ofs)
     return false;
 
-  m_root->print (ofs, 0);
-  return true;
+  return export_stream (ofs);
 }
 
 /* ******************************* operator<< ****************************** */
