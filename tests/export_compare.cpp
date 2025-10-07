@@ -53,67 +53,92 @@ compare_subtree (const std::shared_ptr<litejson::JSONValue> &val1,
 
   if (val1 == nullptr || val2 == nullptr)
     {
-      std::cout << "[I] Value1 or value2 is nullptr" << std::endl;
+      std::cout << "[E] value1 or value2 is nullptr" << std::endl;
       return false;
     }
 
   if (val1->is_null ()) // Check for null
     {
+      std::cout << "[I] Value of the subtree is null" << std::endl;
       if (val2->is_null ())
-        return true;
+        {
+          std::cout << "[I] value1 and value2 are both null" << std::endl;
+          return true;
+        }
       else
         {
-          std::cout << "[I] Value2 is not a null" << std::endl;
+          std::cout << "[E] Value2 is not a null" << std::endl;
           return false;
         }
     }
   else if (val1->is_boolean ()) // Check for boolean
     {
+      std::cout << "[I] Value of the subtree is boolean" << std::endl;
       if (!val2->as_boolean ())
         {
-          std::cout << "[I] Value2 is not a boolean" << std::endl;
+          std::cout << "[E] Value2 is not a boolean" << std::endl;
           return false;
         }
       else
         {
           b1 = val1->as_boolean ().value ();
           b2 = val2->as_boolean ().value ();
+          if (b1 == b2)
+            std::cout << "[I] value1 and value2 are both "
+                      << (b1 ? "true" : "false") << std::endl;
+          else
+            std::cout << "[E] value1 and value2 are not the same boolean"
+                      << std::endl;
           return b1 == b2;
         }
     }
   else if (val1->is_string ()) // Check for string
     {
+      std::cout << "[I] Value of the subtree is string" << std::endl;
       if (!val2->as_string ())
         {
-          std::cout << "[I] Value2 is not a string" << std::endl;
+          std::cout << "[E] Value2 is not a string" << std::endl;
           return false;
         }
       else
         {
           str1 = val1->as_string ().value ();
           str2 = val2->as_string ().value ();
+          if (str1 == str2)
+            std::cout << "[I] value1 and value2 are both \"" << str1 << "\""
+                      << std::endl;
+          else
+            std::cout << "[E] value1 and value2 are not the same string"
+                      << std::endl;
           return str1 == str2;
         }
     }
   else if (val1->is_number ()) // Check for number
     {
+      std::cout << "[I] Value of the subtree is number" << std::endl;
       if (!val2->as_float ())
         {
-          std::cout << "[I] Value2 is not a number" << std::endl;
+          std::cout << "[E] Value2 is not a number" << std::endl;
           return false;
         }
       else
         {
           f1 = val1->as_float ().value ();
           f2 = val2->as_float ().value ();
-          return str1 == str2;
+          if (f1 == f2)
+            std::cout << "[I] value1 and value2 are both " << f1 << std::endl;
+          else
+            std::cout << "[E] value1 and value2 are not the same number"
+                      << std::endl;
+          return f1 == f2;
         }
     }
   else if (val1->is_array ()) // Check for array
     {
+      std::cout << "[I] Value of the subtree is an array" << std::endl;
       if (!val2->is_array ())
         {
-          std::cout << "[I] Value2 is not an array" << std::endl;
+          std::cout << "[E] Value2 is not an array" << std::endl;
           return false;
         }
       else
@@ -121,7 +146,7 @@ compare_subtree (const std::shared_ptr<litejson::JSONValue> &val1,
           if (val1->size () != val2->size ()) // Check for size
             {
               std::cout
-                  << "[I] Size of value2 is not the same as size of value2"
+                  << "[E] Size of value2 is not the same as size of value2"
                   << std::endl;
               return false;
             }
@@ -139,24 +164,44 @@ compare_subtree (const std::shared_ptr<litejson::JSONValue> &val1,
     }
   else if (val1->is_object ()) // Check for object
     {
-      if (val1->size () != val2->size ()) // Check for size
+      std::cout << "[I] Value of the subtree is an object" << std::endl;
+
+      std::string key = val1->as_object_next_key ();
+      size_t n, i, j;
+      bool cmp_result = false;
+
+      while (!key.empty ())
         {
-          std::cout << "[I] Size of value2 is not the same as size of value1"
-                    << std::endl;
-          return false;
+          n = val1->object_key_size (key);
+          if (n != val2->object_key_size (key))
+            {
+              std::cout << "[E] Number of values with key \"" << key
+                        << "\" is not the same" << std::endl;
+              return false;
+            }
+          for (i = 0; i < n; i++)
+            {
+              cmp_result = false;
+              for (j = 0; j < n; j++)
+                {
+                  if (compare_subtree (val1->as_object (key, i),
+                                       val2->as_object (key, j)))
+                    {
+                      cmp_result = true;
+                      break;
+                    }
+                }
+              if (!cmp_result)
+                return false;
+            }
+          key = val1->as_object_next_key (key);
         }
-      auto it2 = val2->begin ();
-      for (auto it1 = val1->begin (); it1 != val1->end (); it1++, it2++)
-        {
-          result = compare_subtree (*it1, *it2);
-          if (result == false)
-            return false;
-        }
+
       return true;
     }
   else
     {
-      std::cout << "[I] Unknown type for value1" << std::endl;
+      std::cout << "[E] Unknown type for value1" << std::endl;
       return false;
     }
 }

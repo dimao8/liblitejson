@@ -18,9 +18,7 @@
 namespace litejson
 {
 
-JSONValue::JSONValueIterator::value_type
-    JSONValue::JSONValueIterator::default_value
-    = nullptr;
+std::string JSONValue::empty_string;
 
 /* ************************* JSONValue::set_parent **************************/
 
@@ -42,22 +40,6 @@ JSONValue::JSONValue (int line) : m_line (line)
 JSONValue::~JSONValue ()
 {
   //
-}
-
-/* **************************** JSONValue::begin *************************** */
-
-JSONValue::JSONValueIterator
-JSONValue::begin ()
-{
-  return JSONValueIterator ();
-}
-
-/* ***************************** JSONValue::end **************************** */
-
-JSONValue::JSONValueIterator
-JSONValue::end ()
-{
-  return JSONValueIterator ();
 }
 
 /* *************************** JSONValue::is_null ************************** */
@@ -180,6 +162,14 @@ JSONValue::as_object (const std::string &key, size_t index) const
   return nullptr;
 }
 
+/* ********************* JSONValue::as_object_for_each ********************* */
+
+const std::string &
+JSONValue::as_object_next_key (const std::string &key) const
+{
+  return empty_string;
+}
+
 /* ************************** JSONValue::as_object ************************* */
 
 std::shared_ptr<JSONValue>
@@ -300,63 +290,6 @@ operator<< (std::ostream &stream, const JSONValue &val)
 {
   val.print (stream, 0);
   return stream;
-}
-
-/* ************ JSONValue::JSONValueIterator::~JSONValueIterator *********** */
-
-JSONValue::JSONValueIterator::~JSONValueIterator ()
-{
-  //
-}
-
-/* **************** JSONValue::JSONValueIterator::operator* **************** */
-
-JSONValue::JSONValueIterator::reference
-JSONValue::JSONValueIterator::operator* () const
-{
-  return default_value;
-}
-
-/* **************** JSONValue::JSONValueIterator::operator-> *************** */
-
-JSONValue::JSONValueIterator::pointer
-JSONValue::JSONValueIterator::operator->() const
-{
-  return &default_value;
-}
-
-/* **************** JSONValue::JSONValueIterator::operator++ *************** */
-
-JSONValue::JSONValueIterator &
-JSONValue::JSONValueIterator::operator++ ()
-{
-  return *this;
-}
-
-/* **************** JSONValue::JSONValueIterator::operator++ *************** */
-
-JSONValue::JSONValueIterator
-JSONValue::JSONValueIterator::operator++ (int)
-{
-  return *this;
-}
-
-/* ******************************* operator== ****************************** */
-
-bool
-operator== (const JSONValue::JSONValueIterator &op1,
-            const JSONValue::JSONValueIterator &op2)
-{
-  return true;
-}
-
-/* ******************************* operator!= ****************************** */
-
-bool
-operator!= (const JSONValue::JSONValueIterator &op1,
-            const JSONValue::JSONValueIterator &op2)
-{
-  return false;
 }
 
 }

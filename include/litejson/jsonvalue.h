@@ -6,7 +6,6 @@
 #define JSONVALUE_H
 
 #include <cstddef>
-#include <iterator>
 #include <memory>
 #include <optional>
 #include <ostream>
@@ -37,9 +36,9 @@ class JSONValue : public std::enable_shared_from_this<JSONValue>
 {
 
 private:
+  static std::string empty_string;
+
   std::weak_ptr<JSONValue> m_parent;
-  // void *m_data_ptr;
-  // JSONValueType m_value_type;
   int m_line;
 
   ///
@@ -48,33 +47,6 @@ private:
   void set_parent (const std::shared_ptr<JSONValue> &parent);
 
 public:
-  // Always empty iterator
-  class JSONValueIterator
-  {
-  public:
-    using iterator_category = std::forward_iterator_tag;
-    using difference_type = std::ptrdiff_t;
-    using value_type = std::shared_ptr<JSONValue>;
-    using pointer = const std::shared_ptr<JSONValue> *;
-    using reference = const std::shared_ptr<JSONValue> &;
-
-  private:
-    static value_type default_value;
-
-  public:
-    JSONValueIterator () = default;
-    virtual ~JSONValueIterator ();
-
-    virtual reference operator* () const;
-    virtual pointer operator->() const;
-    JSONValueIterator &operator++ ();
-    JSONValueIterator operator++ (int);
-    friend bool operator== (const JSONValueIterator &op1,
-                            const JSONValueIterator &op2);
-    friend bool operator!= (const JSONValueIterator &op1,
-                            const JSONValueIterator &op2);
-  };
-
   JSONValue () = delete;
 
   ///
@@ -86,9 +58,6 @@ public:
   /// \brief Destructor
   ///
   virtual ~JSONValue ();
-
-  virtual JSONValueIterator begin ();
-  virtual JSONValueIterator end ();
 
   ///
   /// \brief Add new entry to the array
@@ -204,6 +173,8 @@ public:
   ///
   virtual std::shared_ptr<const JSONValue> as_object (const std::string &key,
                                                       size_t index = 0) const;
+
+  virtual const std::string& as_object_next_key (const std::string & key = "") const;
 
   ///
   /// \brief Return value from object

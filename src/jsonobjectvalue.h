@@ -10,44 +10,17 @@
 namespace litejson
 {
 
-typedef std::multimap<std::string, std::shared_ptr<JSONValue> > ObjectValue;
-
 class JSONObjectValue : public JSONValue
 {
 private:
+  using ObjectValue = std::multimap<std::string, std::shared_ptr<JSONValue> >;
   ObjectValue m_value;
-
-public:
-  class JSONObjectValueIterator : public JSONValue::JSONValueIterator
-  {
-    using MMIterator = std::multimap<std::string, std::shared_ptr<JSONValue>>::const_iterator;
-
-  private:
-    MMIterator m_current_iterator;
-    MMIterator m_end_iterator;
-
-  public:
-    JSONObjectValueIterator (MMIterator start = {}, MMIterator end = {});
-    virtual ~JSONObjectValueIterator ();
-
-    virtual reference operator* () const override;
-    virtual pointer operator->() const override;
-    JSONObjectValueIterator &operator++ ();
-    JSONObjectValueIterator operator++ (int);
-    friend bool operator== (const JSONObjectValueIterator &op1,
-                            const JSONObjectValueIterator &op2);
-    friend bool operator!= (const JSONObjectValueIterator &op1,
-                            const JSONObjectValueIterator &op2);
-  };
 
 public:
   JSONObjectValue () = delete;
   explicit JSONObjectValue (int line);
 
   virtual ~JSONObjectValue ();
-
-  virtual JSONValueIterator begin () override;
-  virtual JSONValueIterator end () override;
 
   ///
   /// \brief Add entry to the object
@@ -105,6 +78,9 @@ public:
   /// If no entry with such key is exists, return 0.
   ///
   virtual size_t object_key_size (const std::string &key) const override final;
+
+  virtual const std::string &as_object_next_key (const std::string &key
+                                                 = "") const override;
 
   ///
   /// \brief Remove object entry and all it's subtree

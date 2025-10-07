@@ -22,23 +22,6 @@ JSONObjectValue::~JSONObjectValue ()
   //
 }
 
-/* ************************* JSONObjectValue::begin ************************ */
-
-JSONValue::JSONValueIterator
-JSONObjectValue::begin ()
-{
-  return JSONObjectValue::JSONObjectValueIterator (m_value.begin (),
-                                                   m_value.end ());
-}
-
-/* ************************** JSONObjectValue::end ************************* */
-
-JSONValue::JSONValueIterator
-JSONObjectValue::end ()
-{
-  return JSONObjectValue::JSONObjectValueIterator ();
-}
-
 /* ******************* JSONObjectValue::add_object_entry ******************* */
 
 void
@@ -109,6 +92,18 @@ JSONObjectValue::as_object (const std::string &key, size_t index)
     }
 }
 
+/* ****************** JSONObjectValue::as_object_next_key ****************** */
+
+const std::string &
+JSONObjectValue::as_object_next_key (const std::string &key) const
+{
+  auto it = m_value.upper_bound (key);
+  if (it == m_value.end())
+    return empty_string;
+  else
+    return it->first;
+}
+
 /* ************************* JSONObjectValue::size ************************* */
 
 size_t
@@ -170,78 +165,6 @@ JSONObjectValue::print (std::ostream &stream, size_t indent) const
         }
     }
   stream << filler.substr (0, indent) << "}";
-}
-
-/* *** JSONObjectValue::JSONObjectValueIterator::JSONObjectValueIterator *** */
-
-JSONObjectValue::JSONObjectValueIterator::JSONObjectValueIterator (
-    JSONObjectValue::JSONObjectValueIterator::MMIterator start,
-    JSONObjectValue::JSONObjectValueIterator::MMIterator end)
-    : JSONValue::JSONValueIterator (), m_current_iterator (start),
-      m_end_iterator (end)
-{
-  //
-}
-
-/* *** JSONObjectValue::JSONObjectValueIterator::~JSONObjectValueIterator ** */
-
-JSONObjectValue::JSONObjectValueIterator::~JSONObjectValueIterator ()
-{
-  //
-}
-
-/* ********** JSONObjectValue::JSONObjectValueIterator::operator* ********** */
-
-JSONValue::JSONValueIterator::reference
-JSONObjectValue::JSONObjectValueIterator::operator* () const
-{
-  return m_current_iterator->second;
-}
-
-/* ********** JSONObjectValue::JSONObjectValueIterator::operator-> ********* */
-
-JSONValue::JSONValueIterator::pointer
-JSONObjectValue::JSONObjectValueIterator::operator->() const
-{
-  return &m_current_iterator->second;
-}
-
-/* ********** JSONObjectValue::JSONObjectValueIterator::operator++ ********* */
-
-JSONObjectValue::JSONObjectValueIterator &
-JSONObjectValue::JSONObjectValueIterator::operator++ ()
-{
-  if (m_current_iterator != m_end_iterator)
-    ++m_current_iterator;
-  return *this;
-}
-
-/* ********** JSONObjectValue::JSONObjectValueIterator::operator++ ********* */
-
-JSONObjectValue::JSONObjectValueIterator
-JSONObjectValue::JSONObjectValueIterator::operator++ (int)
-{
-  JSONObjectValue::JSONObjectValueIterator it = *this;
-  ++(*this);
-  return *this;
-}
-
-/* ******************************* operator== ****************************** */
-
-bool
-operator== (const JSONObjectValue::JSONObjectValueIterator &op1,
-            const JSONObjectValue::JSONObjectValueIterator &op2)
-{
-  return op1.m_current_iterator == op2.m_current_iterator;
-}
-
-/* ******************************* operator!= ****************************** */
-
-bool
-operator!= (const JSONObjectValue::JSONObjectValueIterator &op1,
-            const JSONObjectValue::JSONObjectValueIterator &op2)
-{
-  return op1.m_current_iterator != op2.m_current_iterator;
 }
 
 }
