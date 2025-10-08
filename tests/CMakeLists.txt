@@ -1,7 +1,7 @@
 enable_testing()
 
-set(TESTS_SRC_DIR ${CMAKE_SOURCE_DIR}/tests)
-set(TESTS_BIN_DIR ${CMAKE_BINARY_DIR}/tests)
+set(TESTS_SRC_DIR ${CMAKE_CURRENT_SOURCE_DIR})
+set(TESTS_BIN_DIR ${CMAKE_CURRENT_BINARY_DIR})
 
 # validate
 add_executable(
@@ -11,6 +11,28 @@ add_executable(
 target_include_directories(validate PRIVATE ${CMAKE_SOURCE_DIR}/include)
 target_link_libraries(
   validate PRIVATE
+  $<TARGET_FILE:litejson>
+)
+
+# export_compare
+add_executable(
+  export_compare
+  ${TESTS_SRC_DIR}/export_compare.cpp
+)
+target_include_directories(export_compare PRIVATE ${CMAKE_SOURCE_DIR}/include)
+target_link_libraries(
+  export_compare PRIVATE
+  $<TARGET_FILE:litejson>
+)
+
+# export_compare
+add_executable(
+  create
+  ${TESTS_SRC_DIR}/create.cpp
+)
+target_include_directories(create PRIVATE ${CMAKE_SOURCE_DIR}/include)
+target_link_libraries(
+  create PRIVATE
   $<TARGET_FILE:litejson>
 )
 
@@ -199,8 +221,22 @@ set_property(
   PROPERTY WILL_FAIL True
 )
 
+# t_compare test
+add_test(
+  NAME t_compare
+  COMMAND $<TARGET_FILE:export_compare> --compare --output=result.json ${TESTS_SRC_DIR}/object.json
+  WORKING_DIRECTORY ${TESTS_BIN_DIR}
+)
+
+# t_create test
+add_test(
+  NAME t_create
+  COMMAND $<TARGET_FILE:create> -o ${TESTS_BIN_DIR}/result.json
+  WORKING_DIRECTORY ${TESTS_BIN_DIR}
+)
+
 add_custom_target(
   check
   COMMAND ${CMAKE_CTEST_COMMAND}
-  DEPENDS validate
+  DEPENDS validate export_compare create
 )
