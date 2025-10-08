@@ -25,6 +25,17 @@ target_link_libraries(
   $<TARGET_FILE:litejson>
 )
 
+# export_compare
+add_executable(
+  create
+  ${TESTS_SRC_DIR}/create.cpp
+)
+target_include_directories(create PRIVATE ${CMAKE_SOURCE_DIR}/include)
+target_link_libraries(
+  create PRIVATE
+  $<TARGET_FILE:litejson>
+)
+
 # t_array test
 add_test(
   NAME t_array
@@ -217,8 +228,15 @@ add_test(
   WORKING_DIRECTORY ${TESTS_BIN_DIR}
 )
 
+# t_create test
+add_test(
+  NAME t_create
+  COMMAND $<TARGET_FILE:create> -o ${TESTS_BIN_DIR}/result.json
+  WORKING_DIRECTORY ${TESTS_BIN_DIR}
+)
+
 add_custom_target(
   check
   COMMAND ${CMAKE_CTEST_COMMAND}
-  DEPENDS export_compare validate
+  DEPENDS validate export_compare create
 )

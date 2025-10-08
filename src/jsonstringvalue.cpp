@@ -1,4 +1,6 @@
 #include "jsonstringvalue.h"
+
+#include <cstdio>
 #include <iostream>
 
 namespace litejson
@@ -48,7 +50,37 @@ JSONStringValue::as_string () const
 void
 JSONStringValue::print (std::ostream &stream, size_t indent) const
 {
-  stream << "\"" << m_value << "\"";
+  std::string str;
+  char substr[7];
+
+  for (auto it : m_value)
+    {
+      if (it == '\x08')
+        str += "\\b";
+      else if (it == '\x09')
+        str += "\\t";
+      else if (it == '\x0A')
+        str += "\\n";
+      else if (it == '\x0C')
+        str += "\\f";
+      else if (it == '\x0D')
+        str += "\\r";
+      else if (it == '\x22')
+        str += "\\\"";
+      else if (it == '\x2F')
+        str += "\\/";
+      else if (it == '\x5C')
+        str += "\\\\";
+      else if (it > '\x00' && it < '\x1F')
+        {
+          std::snprintf (substr, 7, "\\u%04hhx", it);
+          str += substr;
+        }
+      else
+        str.push_back (it);
+    }
+
+  stream << "\"" << str << "\"";
 }
 
 }
