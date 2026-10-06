@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.18)
 
 project(
   litejson
-  VERSION 0.2.1.3
+  VERSION 0.2.1.4
   DESCRIPTION "Lite JSON loader"
   HOMEPAGE_URL "https://gitverse.ru/DimaO87/liblitejson"
   LANGUAGES CXX
@@ -52,7 +52,7 @@ target_include_directories(
   litejson PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
   $<BUILD_INTERFACE:${CMAKE_BINARY_DIR}>
-  $<INSTALL_INTERFACE:include/litejson>
+  $<INSTALL_INTERFACE:include>
 )
 set_target_properties(litejson PROPERTIES
   PUBLIC_HEADER "${INTERFACE_HEADERS}"
@@ -80,6 +80,12 @@ install(
   TARGETS litejson
   EXPORT litejson-targets
   PUBLIC_HEADER DESTINATION include/litejson
+)
+
+install(
+	EXPORT litejson-targets
+	NAMESPACE litejson::
+	DESTINATION ${LIB_INSTALL_DIR}/cmake/litejson
 )
 
 install(
